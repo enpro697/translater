@@ -2,21 +2,44 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Bilingual Reader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* iOS動的ビューポートとセーフエリア対応 */
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #F2F2F7;
             -webkit-tap-highlight-color: transparent;
         }
+
+        /* ヘッダーおよびサイドバー上部のセーフエリア余白 */
+        header {
+            padding-top: max(0.75rem, env(safe-area-inset-top));
+        }
+
+        aside#sidebar {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        main {
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+        }
+
         .ios-btn:active {
             opacity: 0.7;
             transform: scale(0.98);
         }
+
         .ios-spinner {
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
@@ -29,23 +52,24 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
-<body class="h-screen text-black flex overflow-hidden">
+<body class="text-black flex">
 
     <!-- サイドバー -->
     <aside id="sidebar" class="bg-gray-900 text-white w-64 md:w-80 flex-shrink-0 flex flex-col h-full absolute md:relative z-30 transition-transform duration-300 -translate-x-full md:translate-x-0">
         <div class="p-3 flex gap-1.5 border-b border-gray-800">
             <button id="copyAllTabsBtn" title="全タブのレスポンスを一括コピー" class="flex-1 bg-gray-800 hover:bg-gray-700 text-[12px] font-medium py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                <span class="truncate">全コピー</span>
+                <span class="truncate">全タブコピー</span>
             </button>
             <button id="copyCurrentTabBtn" title="現在のタブのレスポンスをコピー" class="flex-1 bg-gray-800 hover:bg-gray-700 text-[12px] font-medium py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                <span class="truncate">コピー</span>
+                <span class="truncate">タブ内コピー</span>
             </button>
             <button id="newTabBtn" class="flex-none bg-blue-600 hover:bg-blue-500 text-[12px] font-medium py-2 px-2.5 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -58,14 +82,15 @@
     <!-- モバイル用オーバーレイ -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
 
-    <!-- メインコンテンツ -->
+    <!-- メインエリア -->
     <div class="flex-1 flex flex-col h-full relative w-full overflow-hidden bg-[#F2F2F7]">
-        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 flex-none px-4 py-3 flex items-center justify-between z-10">
-            <button id="menuBtn" class="md:hidden p-1 -ml-1 text-gray-600 ios-btn">
+        <!-- ヘッダー (セーフエリア対応済み) -->
+        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 flex-none px-4 pb-3 flex items-center justify-between z-10">
+            <button id="menuBtn" class="md:hidden p-1.5 -ml-1 text-gray-700 hover:bg-gray-100 rounded-lg ios-btn">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
-            <h1 class="text-[17px] font-semibold tracking-tight mx-auto">Bilingual Reader</h1>
-            <div class="w-6 md:hidden"></div>
+            <h1 class="text-[17px] font-semibold tracking-tight mx-auto select-none">Bilingual Reader</h1>
+            <div class="w-8 md:hidden"></div>
         </header>
 
         <main class="flex-1 overflow-y-auto p-4 md:p-6 w-full">
@@ -80,13 +105,11 @@
                         <textarea id="inputText" rows="5" class="w-full p-4 text-[17px] leading-relaxed outline-none resize-none" placeholder="ここにテキストをペースト、またはクリップボードの画像を直接貼り付け (Ctrl+V)..."></textarea>
                     </div>
 
-                    <!-- 添付ファイル選択 & 画像プレビューエリア -->
+                    <!-- 添付ファイル選択 & プレビュー -->
                     <div class="flex flex-col gap-2 px-1">
                         <div class="flex items-center gap-2">
                             <input type="file" id="fileInput" multiple accept="image/*, application/pdf" class="text-[13px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[13px] file:font-semibold file:bg-[#007AFF]/10 file:text-[#007AFF] hover:file:bg-[#007AFF]/20 transition-colors cursor-pointer w-full">
                         </div>
-                        
-                        <!-- プレビューリスト -->
                         <div id="previewContainer" class="flex flex-wrap gap-2 empty:hidden pt-1"></div>
                     </div>
 
@@ -100,7 +123,7 @@
                         <div class="flex flex-col gap-1">
                             <label for="apiKeyInput" class="text-[13px] text-gray-700 font-semibold">Gemini APIキー</label>
                             <input type="password" id="apiKeyInput" class="w-full p-2.5 text-[14px] bg-gray-50 rounded border border-gray-200 outline-none" placeholder="AIzaSy... または AQ...">
-                            <span class="text-[11px] text-gray-400">※APIキーはブラウザ内（localStorage）にのみ安全に保存され、Gitリポジトリ等へ送信されることはありません。</span>
+                            <span class="text-[11px] text-gray-400">※キーはブラウザ内（localStorage）にのみ保存され、外部には送信されません。</span>
                         </div>
 
                         <div class="flex flex-col gap-1">
@@ -151,9 +174,7 @@
 CRITICAL RULES for chunking:
 - Divide the text into logical chunks of roughly 7 to 8 lines.
 - The maximum length of a single chunk MUST NOT exceed 10 lines.
-- ALWAYS split at natural sentence boundaries (e.g., Japanese full stops "。"). Do not cut mid-sentence.
-- 漫画等ルビが振ってある場合は、ルビは原文に表示しなくてよい
-`;
+- ALWAYS split at natural sentence boundaries (e.g., Japanese full stops "。"). Do not cut mid-sentence.`;
 
         let sessions = [];
         let currentSessionId = null;
@@ -200,7 +221,7 @@ CRITICAL RULES for chunking:
                 inputText: '',
                 prompt: DEFAULT_PROMPT,
                 results: [],
-                attachedFiles: [], // { name, mimeType, data (base64) }
+                attachedFiles: [],
                 isProcessing: false
             };
             sessions.unshift(newSession);
@@ -272,7 +293,7 @@ CRITICAL RULES for chunking:
             });
         }
 
-        // --- クリップボード画像ペースト処理 (Ctrl+V) ---
+        // クリップボードからの画像ペースト (Ctrl+V)
         window.addEventListener('paste', async (e) => {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
             const session = sessions.find(s => s.id === currentSessionId);
@@ -298,7 +319,7 @@ CRITICAL RULES for chunking:
             }
         });
 
-        // ファイル選択からの追加
+        // ファイル選択
         fileInput.addEventListener('change', async (e) => {
             const session = sessions.find(s => s.id === currentSessionId);
             if (!session) return;
@@ -312,10 +333,9 @@ CRITICAL RULES for chunking:
                 });
             }
             renderPreviews(session);
-            fileInput.value = ''; // 連続選択可能にする
+            fileInput.value = '';
         });
 
-        // プレビュー描画 & 削除ボタン
         function renderPreviews(session) {
             previewContainer.innerHTML = '';
             if (!session.attachedFiles || session.attachedFiles.length === 0) return;
@@ -336,7 +356,6 @@ CRITICAL RULES for chunking:
                     wrap.appendChild(icon);
                 }
 
-                // 削除ボタン
                 const delBtn = document.createElement('button');
                 delBtn.className = 'absolute top-0 right-0 bg-black/60 text-white rounded-bl p-0.5 hover:bg-red-600 transition-colors ios-btn';
                 delBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
