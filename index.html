@@ -8,38 +8,24 @@
     <title>Bilingual Reader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* iOS動的ビューポートとセーフエリア対応 */
         html, body {
             height: 100vh;
             height: 100dvh;
             overflow: hidden;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #F2F2F7;
             -webkit-tap-highlight-color: transparent;
         }
-
-        /* ヘッダーおよびサイドバー上部のセーフエリア余白 */
-        header {
-            padding-top: max(0.75rem, env(safe-area-inset-top));
-        }
-
-        aside#sidebar {
-            padding-top: env(safe-area-inset-top);
+        header { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+        aside#sidebar { 
+            padding-top: env(safe-area-inset-top); 
             padding-bottom: env(safe-area-inset-bottom);
         }
+        main { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 
-        main {
-            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
-        }
-
-        .ios-btn:active {
-            opacity: 0.7;
-            transform: scale(0.98);
-        }
-
+        .ios-btn:active { opacity: 0.7; transform: scale(0.98); }
         .ios-spinner {
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
@@ -48,11 +34,7 @@
             height: 20px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -62,6 +44,7 @@
 
     <!-- サイドバー -->
     <aside id="sidebar" class="bg-gray-900 text-white w-64 md:w-80 flex-shrink-0 flex flex-col h-full absolute md:relative z-30 transition-transform duration-300 -translate-x-full md:translate-x-0">
+        <!-- 上部アクションボタン群 -->
         <div class="p-3 flex gap-1.5 border-b border-gray-800">
             <button id="copyAllTabsBtn" title="全タブのレスポンスを一括コピー" class="flex-1 bg-gray-800 hover:bg-gray-700 text-[12px] font-medium py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -76,7 +59,17 @@
                 <span>新規</span>
             </button>
         </div>
+        
+        <!-- タブリスト -->
         <div id="tabList" class="flex-1 overflow-y-auto p-2 flex flex-col gap-1"></div>
+
+        <!-- 下部アクション (キャッシュクリア) -->
+        <div class="p-3 border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm">
+            <button id="clearCacheBtn" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[13px] font-medium py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                履歴を全削除
+            </button>
+        </div>
     </aside>
 
     <!-- モバイル用オーバーレイ -->
@@ -84,7 +77,6 @@
 
     <!-- メインエリア -->
     <div class="flex-1 flex flex-col h-full relative w-full overflow-hidden bg-[#F2F2F7]">
-        <!-- ヘッダー (セーフエリア対応済み) -->
         <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 flex-none px-4 pb-3 flex items-center justify-between z-10">
             <button id="menuBtn" class="md:hidden p-1.5 -ml-1 text-gray-700 hover:bg-gray-100 rounded-lg ios-btn">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -123,7 +115,7 @@
                         <div class="flex flex-col gap-1">
                             <label for="apiKeyInput" class="text-[13px] text-gray-700 font-semibold">Gemini APIキー</label>
                             <input type="password" id="apiKeyInput" class="w-full p-2.5 text-[14px] bg-gray-50 rounded border border-gray-200 outline-none" placeholder="AIzaSy... または AQ...">
-                            <span class="text-[11px] text-gray-400">※キーはブラウザ内（localStorage）にのみ保存され、外部には送信されません。</span>
+                            <span class="text-[11px] text-gray-400">※キーはブラウザ内（localStorage）にのみ保存されます。</span>
                         </div>
 
                         <div class="flex flex-col gap-1">
@@ -132,7 +124,7 @@
                         </div>
 
                         <div class="flex justify-between items-center mt-1">
-                            <button id="resetPromptBtn" class="text-[14px] text-red-500 font-medium ios-btn">プロンプトをデフォルトに戻す</button>
+                            <button id="resetPromptBtn" class="text-[14px] text-red-500 font-medium ios-btn">デフォルトに戻す</button>
                             <button id="applyPromptBtn" class="text-[14px] bg-gray-800 text-white px-4 py-2 rounded-[8px] font-medium ios-btn">設定を保存して閉じる</button>
                         </div>
                     </div>
@@ -207,12 +199,57 @@ CRITICAL RULES for chunking:
         const newTabBtn = document.getElementById('newTabBtn');
         const copyAllTabsBtn = document.getElementById('copyAllTabsBtn');
         const copyCurrentTabBtn = document.getElementById('copyCurrentTabBtn');
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
         const tabList = document.getElementById('tabList');
 
         apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
 
-        createNewSession();
+        // 初期化処理：キャッシュがあれば復元、なければ新規作成
+        if (!loadStateFromStorage()) {
+            createNewSession();
+        }
 
+        // --- 状態の永続化 (キャッシュ保存/読込) ---
+        function saveStateToStorage() {
+            try {
+                // 画像データ(Base64)は数MBに達しQuotaExceededErrorになるため、保存対象から除外してテキストだけ保存する
+                const sessionsToSave = sessions.map(s => ({
+                    ...s,
+                    attachedFiles: [], 
+                    isProcessing: false
+                }));
+                localStorage.setItem('bilingual_reader_sessions', JSON.stringify(sessionsToSave));
+                localStorage.setItem('bilingual_reader_current_id', currentSessionId);
+            } catch (e) {
+                console.warn("Storage capacity exceeded:", e);
+            }
+        }
+
+        function loadStateFromStorage() {
+            const savedStr = localStorage.getItem('bilingual_reader_sessions');
+            if (!savedStr) return false;
+            
+            try {
+                sessions = JSON.parse(savedStr);
+                if (!Array.isArray(sessions) || sessions.length === 0) return false;
+
+                sessions.forEach(s => {
+                    s.isProcessing = false;
+                    if (!s.attachedFiles) s.attachedFiles = [];
+                });
+
+                const savedId = localStorage.getItem('bilingual_reader_current_id');
+                currentSessionId = sessions.find(s => s.id === savedId) ? savedId : sessions[0].id;
+                
+                switchSession(currentSessionId);
+                return true;
+            } catch (e) {
+                console.error("Failed to load sessions from storage:", e);
+                return false;
+            }
+        }
+
+        // --- セッション操作 ---
         function createNewSession() {
             const id = Date.now().toString();
             const newSession = {
@@ -226,6 +263,7 @@ CRITICAL RULES for chunking:
             };
             sessions.unshift(newSession);
             switchSession(id);
+            saveStateToStorage();
         }
 
         function switchSession(id) {
@@ -250,6 +288,7 @@ CRITICAL RULES for chunking:
             
             renderTabList();
             closeSidebarMobile();
+            saveStateToStorage();
         }
 
         function updateTranslateButtonState(isProcessing) {
@@ -273,6 +312,7 @@ CRITICAL RULES for chunking:
                 if (inputText.value.trim().length > 0 && session.results.length === 0) {
                     session.title = inputText.value.trim().substring(0, 15).replace(/\n/g, ' ') + '...';
                 }
+                saveStateToStorage();
             }
         }
 
@@ -293,85 +333,21 @@ CRITICAL RULES for chunking:
             });
         }
 
-        // クリップボードからの画像ペースト (Ctrl+V)
-        window.addEventListener('paste', async (e) => {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            const session = sessions.find(s => s.id === currentSessionId);
-            if (!session) return;
-
-            let imageFound = false;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file' && item.type.startsWith('image/')) {
-                    const blob = item.getAsFile();
-                    const b64Data = await fileToBase64(blob);
-                    session.attachedFiles.push({
-                        name: `ペースト画像_${Date.now()}`,
-                        mimeType: b64Data.mimeType,
-                        data: b64Data.data
-                    });
-                    imageFound = true;
-                }
-            }
-            if (imageFound) {
-                renderPreviews(session);
-                showToast("画像を添付しました");
-            }
-        });
-
-        // ファイル選択
-        fileInput.addEventListener('change', async (e) => {
-            const session = sessions.find(s => s.id === currentSessionId);
-            if (!session) return;
-
-            for (const file of e.target.files) {
-                const b64Data = await fileToBase64(file);
-                session.attachedFiles.push({
-                    name: file.name,
-                    mimeType: b64Data.mimeType,
-                    data: b64Data.data
-                });
-            }
-            renderPreviews(session);
-            fileInput.value = '';
-        });
-
-        function renderPreviews(session) {
-            previewContainer.innerHTML = '';
-            if (!session.attachedFiles || session.attachedFiles.length === 0) return;
-
-            session.attachedFiles.forEach((file, index) => {
-                const wrap = document.createElement('div');
-                wrap.className = 'relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center';
-
-                if (file.mimeType.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = `data:${file.mimeType};base64,${file.data}`;
-                    img.className = 'w-full h-full object-cover';
-                    wrap.appendChild(img);
-                } else {
-                    const icon = document.createElement('span');
-                    icon.className = 'text-[10px] text-gray-500 font-bold p-1 text-center truncate';
-                    icon.textContent = 'PDF';
-                    wrap.appendChild(icon);
-                }
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'absolute top-0 right-0 bg-black/60 text-white rounded-bl p-0.5 hover:bg-red-600 transition-colors ios-btn';
-                delBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
-                delBtn.onclick = (ev) => {
-                    ev.stopPropagation();
-                    session.attachedFiles.splice(index, 1);
-                    renderPreviews(session);
-                };
-
-                wrap.appendChild(delBtn);
-                previewContainer.appendChild(wrap);
-            });
-        }
-
+        // --- イベントリスナー群 ---
         inputText.addEventListener('input', () => saveCurrentSessionInput());
         newTabBtn.addEventListener('click', createNewSession);
+        
+        clearCacheBtn.addEventListener('click', () => {
+            if (confirm("すべてのタブと翻訳履歴を削除します。\n※APIキーの設定は保持されます。\nよろしいですか？")) {
+                localStorage.removeItem('bilingual_reader_sessions');
+                localStorage.removeItem('bilingual_reader_current_id');
+                sessions = [];
+                currentSessionId = null;
+                createNewSession();
+                showToast("すべての履歴をクリアしました");
+            }
+        });
+
         menuBtn.addEventListener('click', () => {
             sidebar.classList.remove('-translate-x-full');
             sidebarOverlay.classList.remove('hidden');
@@ -426,8 +402,98 @@ CRITICAL RULES for chunking:
 
             promptArea.classList.add('hidden');
             promptArea.classList.remove('flex');
+            saveStateToStorage();
         });
 
+        // --- 画像処理関連 ---
+        window.addEventListener('paste', async (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            const session = sessions.find(s => s.id === currentSessionId);
+            if (!session) return;
+
+            let imageFound = false;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    const b64Data = await fileToBase64(blob);
+                    session.attachedFiles.push({
+                        name: `ペースト画像_${Date.now()}`,
+                        mimeType: b64Data.mimeType,
+                        data: b64Data.data
+                    });
+                    imageFound = true;
+                }
+            }
+            if (imageFound) {
+                renderPreviews(session);
+                showToast("画像を添付しました");
+            }
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const session = sessions.find(s => s.id === currentSessionId);
+            if (!session) return;
+
+            for (const file of e.target.files) {
+                const b64Data = await fileToBase64(file);
+                session.attachedFiles.push({
+                    name: file.name,
+                    mimeType: b64Data.mimeType,
+                    data: b64Data.data
+                });
+            }
+            renderPreviews(session);
+            fileInput.value = '';
+        });
+
+        function renderPreviews(session) {
+            previewContainer.innerHTML = '';
+            if (!session.attachedFiles || session.attachedFiles.length === 0) return;
+
+            session.attachedFiles.forEach((file, index) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center';
+
+                if (file.mimeType.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = `data:${file.mimeType};base64,${file.data}`;
+                    img.className = 'w-full h-full object-cover';
+                    wrap.appendChild(img);
+                } else {
+                    const icon = document.createElement('span');
+                    icon.className = 'text-[10px] text-gray-500 font-bold p-1 text-center truncate';
+                    icon.textContent = 'PDF';
+                    wrap.appendChild(icon);
+                }
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'absolute top-0 right-0 bg-black/60 text-white rounded-bl p-0.5 hover:bg-red-600 transition-colors ios-btn';
+                delBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                delBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    session.attachedFiles.splice(index, 1);
+                    renderPreviews(session);
+                };
+
+                wrap.appendChild(delBtn);
+                previewContainer.appendChild(wrap);
+            });
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve({
+                    mimeType: file.type,
+                    data: reader.result.split(',')[1]
+                });
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // --- コピー機能関連 ---
         async function copyToClipboard(text, successMsg = "コピーしました") {
             try {
                 await navigator.clipboard.writeText(text);
@@ -474,45 +540,16 @@ CRITICAL RULES for chunking:
             copyToClipboard(combinedText, "全タブの対訳を一括コピーしました");
         });
 
-        function showToast(msg = "コピーしました") {
-            toast.textContent = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 2000);
-        }
+        window.copyCardById = function(cardId) {
+            const block = window[cardId];
+            if (!block) return;
+            let text = "";
+            if (block.speaker) text += `(${block.speaker})\n`;
+            text += `${block.japaneseText}\n\n${block.englishText}`;
+            copyToClipboard(text, "カードの対訳をコピーしました");
+        };
 
-        function showError(msg) {
-            errorMessage.textContent = msg;
-            errorModal.classList.remove('hidden');
-            errorModal.classList.add('flex');
-            requestAnimationFrame(() => {
-                errorModal.classList.remove('opacity-0');
-                errorModalBox.classList.remove('scale-95');
-            });
-        }
-
-        function closeError() {
-            errorModal.classList.add('opacity-0');
-            errorModalBox.classList.add('scale-95');
-            setTimeout(() => {
-                errorModal.classList.add('hidden');
-                errorModal.classList.remove('flex');
-            }, 300);
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve({
-                    mimeType: file.type,
-                    data: reader.result.split(',')[1]
-                });
-                reader.onerror = error => reject(error);
-            });
-        }
-
+        // --- メイン通信処理 ---
         async function processTranslation() {
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
@@ -551,6 +588,10 @@ CRITICAL RULES for chunking:
                 if (currentSessionId === targetSession.id) {
                     renderResults(results);
                 }
+                
+                // ★通信成功時にキャッシュを自動保存
+                saveStateToStorage();
+
             } catch (err) {
                 console.error(err);
                 showError(err.message || "翻訳中にエラーが発生しました。通信状況やAPIキーをご確認ください。");
@@ -626,6 +667,7 @@ Format:
             }
         }
 
+        // --- ユーティリティUI描画 ---
         function renderResults(dataArray) {
             resultsContainer.innerHTML = '';
             if (!Array.isArray(dataArray) || dataArray.length === 0) return;
@@ -674,14 +716,32 @@ Format:
             }, 100);
         }
 
-        window.copyCardById = function(cardId) {
-            const block = window[cardId];
-            if (!block) return;
-            let text = "";
-            if (block.speaker) text += `(${block.speaker})\n`;
-            text += `${block.japaneseText}\n\n${block.englishText}`;
-            copyToClipboard(text, "カードの対訳をコピーしました");
-        };
+        function showToast(msg = "コピーしました") {
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorModal.classList.remove('hidden');
+            errorModal.classList.add('flex');
+            requestAnimationFrame(() => {
+                errorModal.classList.remove('opacity-0');
+                errorModalBox.classList.remove('scale-95');
+            });
+        }
+
+        function closeError() {
+            errorModal.classList.add('opacity-0');
+            errorModalBox.classList.add('scale-95');
+            setTimeout(() => {
+                errorModal.classList.add('hidden');
+                errorModal.classList.remove('flex');
+            }, 300);
+        }
 
         function escapeHtml(str) {
             if (!str) return "";
