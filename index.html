@@ -90,7 +90,7 @@
                 <!-- 入力エリア -->
                 <section class="flex flex-col gap-3">
                     <div class="flex justify-between items-end px-1">
-                        <label for="inputText" class="text-[13px] text-gray-500 uppercase font-medium">X (Twitter) のテキスト / 画像ペースト</label>
+                        <label for="inputText" class="text-[13px] text-gray-500 uppercase font-medium">テキスト / 画像ペースト</label>
                         <button id="clearBtn" class="text-[15px] text-[#007AFF] ios-btn">クリア</button>
                     </div>
                     <div class="bg-white rounded-[10px] overflow-hidden shadow-sm border border-gray-200 focus-within:ring-2 focus-within:ring-[#007AFF]/30 transition-all">
@@ -166,7 +166,9 @@
 CRITICAL RULES for chunking:
 - Divide the text into logical chunks of roughly 7 to 8 lines.
 - The maximum length of a single chunk MUST NOT exceed 10 lines.
-- ALWAYS split at natural sentence boundaries (e.g., Japanese full stops "。"). Do not cut mid-sentence.`;
+- ALWAYS split at natural sentence boundaries (e.g., Japanese full stops "。"). Do not cut mid-sentence.
+- 漫画等の画像のルビは表示しなくてよい
+`;
 
         let sessions = [];
         let currentSessionId = null;
