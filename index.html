@@ -161,12 +161,13 @@
     </div>
 
     <script>
-        const DEFAULT_PROMPT = `You are a bilingual translator optimized for mobile reading. Parse the user's text (X/Twitter post or dialogue, and attached images), identify speakers or paragraph breaks, and provide structured Japanese-English translations.
+        // 日本語・英語に限定せず、汎用的な「対訳」としてプロンプトを調整
+        const DEFAULT_PROMPT = `You are a bilingual translator optimized for mobile reading. Parse the user's text (X/Twitter post or dialogue, and attached images), identify speakers or paragraph breaks, and provide structured translations.
 
 CRITICAL RULES for chunking:
 - Divide the text into logical chunks of roughly 7 to 8 lines.
 - The maximum length of a single chunk MUST NOT exceed 10 lines.
-- ALWAYS split at natural sentence boundaries (e.g., Japanese full stops "。"). Do not cut mid-sentence.
+- ALWAYS split at natural sentence boundaries (e.g., full stops). Do not cut mid-sentence.
 - 漫画等の画像のルビは表示しなくてよい
 `;
 
@@ -509,8 +510,9 @@ CRITICAL RULES for chunking:
             let text = "";
             results.forEach(block => {
                 if (block.speaker) text += `(${block.speaker})\n`;
-                text += `${block.japaneseText}\n\n`;
-                text += `${block.englishText}\n\n`;
+                // キーを汎用的なものに変更
+                text += `${block.sourceText || ''}\n\n`;
+                text += `${block.translatedText || ''}\n\n`;
             });
             return text.trim();
         }
@@ -547,7 +549,8 @@ CRITICAL RULES for chunking:
             if (!block) return;
             let text = "";
             if (block.speaker) text += `(${block.speaker})\n`;
-            text += `${block.japaneseText}\n\n${block.englishText}`;
+            // キーを汎用的なものに変更
+            text += `${block.sourceText || ''}\n\n${block.translatedText || ''}`;
             copyToClipboard(text, "カードの対訳をコピーしました");
         };
 
@@ -591,7 +594,6 @@ CRITICAL RULES for chunking:
                     renderResults(results);
                 }
                 
-                // ★通信成功時にキャッシュを自動保存
                 saveStateToStorage();
 
             } catch (err) {
@@ -617,13 +619,14 @@ CRITICAL RULES for chunking:
                 });
             });
 
+            // JSONフォーマットの指示文を汎用キーに変更
             const jsonInstruction = `\n\nYOU MUST RESPOND ONLY WITH A VALID JSON ARRAY. No explanations, no markdown blocks.
 Format:
 [
   {
     "speaker": "Speaker Name (or empty string)",
-    "japaneseText": "Japanese segment",
-    "englishText": "English translation"
+    "sourceText": "Original text segment",
+    "translatedText": "Translated text segment"
   }
 ]`;
 
@@ -696,14 +699,15 @@ Format:
                     </button>
                 `;
 
+                // 汎用キーに変更 (sourceText, translatedText)
                 const textHtml = `
                     <div class="p-4 flex flex-col gap-3 pt-4">
                         <div class="text-[16px] text-gray-900 leading-relaxed font-sans pr-8">
-                            ${escapeHtml(block.japaneseText).replace(/\n/g, '<br>')}
+                            ${escapeHtml(block.sourceText || '').replace(/\n/g, '<br>')}
                         </div>
                         <div class="h-px bg-gray-100 w-full"></div>
                         <div class="text-[16px] text-[#007AFF] leading-relaxed font-sans pr-8">
-                            ${escapeHtml(block.englishText).replace(/\n/g, '<br>')}
+                            ${escapeHtml(block.translatedText || '').replace(/\n/g, '<br>')}
                         </div>
                     </div>
                 `;
