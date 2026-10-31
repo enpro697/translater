@@ -182,7 +182,7 @@ CRITICAL RULES for chunking:
 
         let sessions = [];
         let currentSessionId = null;
-        let isTranslationVisible = true; // 訳文の表示状態管理
+        let isTranslationVisible = true;
 
         const inputText = document.getElementById('inputText');
         const fileInput = document.getElementById('fileInput');
@@ -346,7 +346,6 @@ CRITICAL RULES for chunking:
             });
         }
 
-        // --- 訳文一括トグル機能 ---
         function updateTranslationVisibilityUI() {
             const translatedElements = document.querySelectorAll('.translated-content');
             translatedElements.forEach(el => {
@@ -647,7 +646,7 @@ CRITICAL RULES for chunking:
         }
 
         async function callGeminiAPI(apiKey, text, attachedFiles, promptStr, retries = 3, delay = 1000) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
             const parts = [];
             if (text) parts.push({ text: text });
@@ -736,7 +735,6 @@ Format:
                     </button>
                 `;
 
-                // translated-content クラスを付与して一括表示/非表示を制御
                 const textHtml = `
                     <div class="p-4 flex flex-col gap-3 pt-4">
                         <div class="text-[16px] text-gray-900 leading-relaxed font-sans pr-8">
