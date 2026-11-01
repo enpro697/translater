@@ -265,11 +265,21 @@ CRITICAL RULES for chunking:
 
         function createNewSession() {
             const id = Date.now().toString();
+
+            // 直前のカレントセッションがあればそのプロンプト、なければ保存された最新値、それもなければデフォルト
+            let initialPrompt = DEFAULT_PROMPT;
+            const currentSession = sessions.find(s => s.id === currentSessionId);
+            if (currentSession && currentSession.prompt) {
+                initialPrompt = currentSession.prompt;
+            } else {
+                initialPrompt = localStorage.getItem('bilingual_reader_latest_prompt') || DEFAULT_PROMPT;
+            }
+
             const newSession = {
                 id: id,
                 title: '新規チャット',
                 inputText: '',
-                prompt: DEFAULT_PROMPT,
+                prompt: initialPrompt,
                 results: [],
                 attachedFiles: [],
                 isProcessing: false
@@ -435,8 +445,12 @@ CRITICAL RULES for chunking:
 
         applyPromptBtn.addEventListener('click', () => {
             const session = sessions.find(s => s.id === currentSessionId);
-            session.prompt = promptInput.value.trim() || DEFAULT_PROMPT;
+            const chosenPrompt = promptInput.value.trim() || DEFAULT_PROMPT;
+            session.prompt = chosenPrompt;
             
+            // 次回新規作成時にも引き継げるよう最新プロンプトを保存
+            localStorage.setItem('bilingual_reader_latest_prompt', chosenPrompt);
+
             const keyVal = apiKeyInput.value.trim();
             if (keyVal) {
                 localStorage.setItem('gemini_api_key', keyVal);
