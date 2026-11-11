@@ -12,8 +12,8 @@
             darkMode: 'class'
         }
         // 初期読み込み時のテーマ判定
-        const savedTheme = localStorage.getItem('bilingual_reader_theme');
-        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        const savedTheme = localStorage.getItem('bilingual_reader_theme') || 'system';
+        if (savedTheme === 'dark' || (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
     </script>
@@ -92,10 +92,12 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
             <h1 class="text-[17px] font-semibold tracking-tight mx-auto select-none dark:text-white">Bilingual Reader</h1>
-            <button id="themeToggleBtn" title="テーマ切り替え" class="p-1.5 -mr-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg ios-btn transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            
+            <!-- 薄い線の歯車アイコン -->
+            <button id="settingsBtn" title="設定" class="p-1.5 -mr-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg ios-btn transition-colors">
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.25" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
             </button>
         </header>
@@ -169,6 +171,28 @@
         </main>
     </div>
 
+    <!-- UI共通設定ドロワー -->
+    <div id="settingsDrawerOverlay" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="settingsDrawer" class="fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-[#1C1C1E] z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
+        <div class="px-5 py-4 border-b-[2px] border-[#007AFF] flex justify-between items-center">
+            <h2 class="text-[16px] font-bold text-[#007AFF]">設定</h2>
+            <button id="closeSettingsDrawerBtn" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white text-2xl font-bold leading-none">&times;</button>
+        </div>
+        <div class="p-5 flex flex-col gap-3">
+            <label class="text-[13px] text-gray-800 dark:text-gray-200">テーマ設定</label>
+            <div class="relative">
+                <select id="themeSelect" class="w-full p-2 bg-white dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 rounded-[4px] text-[14px] outline-none focus:border-[#007AFF] dark:text-white appearance-none cursor-pointer">
+                    <option value="light">ライトモード</option>
+                    <option value="dark">ダークモード</option>
+                    <option value="system">システム設定に従う</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- カスタムエラーモーダル -->
     <div id="errorModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 px-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-[14px] p-6 max-w-sm w-full text-center shadow-2xl transform scale-95 transition-transform duration-300" id="errorModalBox">
@@ -234,18 +258,57 @@ CRITICAL RULES for chunking:
         const clearCacheBtn = document.getElementById('clearCacheBtn');
         const tabList = document.getElementById('tabList');
 
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        
-        // テーマ切り替えイベント
-        themeToggleBtn.addEventListener('click', () => {
+        // テーマ・ドロワー関連要素
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDrawerOverlay = document.getElementById('settingsDrawerOverlay');
+        const settingsDrawer = document.getElementById('settingsDrawer');
+        const closeSettingsDrawerBtn = document.getElementById('closeSettingsDrawerBtn');
+        const themeSelect = document.getElementById('themeSelect');
+
+        // テーマ初期化と適用
+        function applyTheme(themeValue) {
             const htmlEl = document.documentElement;
-            htmlEl.classList.toggle('dark');
-            if (htmlEl.classList.contains('dark')) {
-                localStorage.setItem('bilingual_reader_theme', 'dark');
+            if (themeValue === 'dark' || (themeValue === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                htmlEl.classList.add('dark');
             } else {
-                localStorage.setItem('bilingual_reader_theme', 'light');
+                htmlEl.classList.remove('dark');
+            }
+        }
+
+        const currentSavedTheme = localStorage.getItem('bilingual_reader_theme') || 'system';
+        themeSelect.value = currentSavedTheme;
+        
+        themeSelect.addEventListener('change', (e) => {
+            const newTheme = e.target.value;
+            localStorage.setItem('bilingual_reader_theme', newTheme);
+            applyTheme(newTheme);
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (localStorage.getItem('bilingual_reader_theme') === 'system') {
+                applyTheme('system');
             }
         });
+
+        // ドロワー開閉ロジック
+        function openSettingsDrawer() {
+            settingsDrawerOverlay.classList.remove('hidden');
+            void settingsDrawerOverlay.offsetWidth; // trigger reflow
+            settingsDrawerOverlay.classList.remove('opacity-0');
+            settingsDrawer.classList.remove('translate-x-full');
+        }
+
+        function closeSettingsDrawer() {
+            settingsDrawerOverlay.classList.add('opacity-0');
+            settingsDrawer.classList.add('translate-x-full');
+            setTimeout(() => {
+                settingsDrawerOverlay.classList.add('hidden');
+            }, 300);
+        }
+
+        settingsBtn.addEventListener('click', openSettingsDrawer);
+        closeSettingsDrawerBtn.addEventListener('click', closeSettingsDrawer);
+        settingsDrawerOverlay.addEventListener('click', closeSettingsDrawer);
 
         apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
 
