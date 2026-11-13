@@ -753,7 +753,7 @@ CRITICAL RULES for chunking output:
         }
 
         async function callGeminiAPI(apiKey, text, attachedFiles, promptStr, retries = 3, delay = 1000) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
             const parts = [];
             if (text) parts.push({ text: text });
