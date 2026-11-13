@@ -154,10 +154,14 @@
 
                 <!-- 出力エリア -->
                 <section id="outputSection" class="flex flex-col gap-4 pb-12 hidden">
-                    <div class="flex justify-between items-center px-1 mt-4">
-                        <h2 class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium">結果</h2>
+                    <div class="flex justify-between items-center px-1 mt-4 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <h2 class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium flex-shrink-0">結果</h2>
+                            <!-- 応答モデル表示バッジ -->
+                            <span id="usedModelBadge" class="hidden text-[11px] font-mono bg-gray-200/80 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-md truncate"></span>
+                        </div>
                         <!-- 訳文一括開閉ボタン -->
-                        <button id="toggleTranslationVisibilityBtn" class="text-[13px] text-[#007AFF] dark:text-[#60A5FA] font-medium flex items-center gap-1 ios-btn">
+                        <button id="toggleTranslationVisibilityBtn" class="text-[13px] text-[#007AFF] dark:text-[#60A5FA] font-medium flex items-center gap-1 ios-btn flex-shrink-0">
                             <svg id="toggleEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -241,6 +245,7 @@ CRITICAL RULES for chunking output:
         const loadingSpinner = document.getElementById('loadingSpinner');
         const outputSection = document.getElementById('outputSection');
         const resultsContainer = document.getElementById('resultsContainer');
+        const usedModelBadge = document.getElementById('usedModelBadge');
         
         const toggleTranslationVisibilityBtn = document.getElementById('toggleTranslationVisibilityBtn');
         const toggleTranslationText = document.getElementById('toggleTranslationText');
@@ -348,6 +353,7 @@ CRITICAL RULES for chunking output:
                 sessions.forEach(s => {
                     s.isProcessing = false;
                     if (!s.attachedFiles) s.attachedFiles = [];
+                    if (!s.usedModel) s.usedModel = '';
                 });
 
                 const savedId = localStorage.getItem('bilingual_reader_current_id');
@@ -378,6 +384,7 @@ CRITICAL RULES for chunking output:
                 inputText: '',
                 prompt: initialPrompt,
                 results: [],
+                usedModel: '',
                 attachedFiles: [],
                 isProcessing: false
             };
@@ -400,10 +407,11 @@ CRITICAL RULES for chunking output:
             updateTranslateButtonState(session.isProcessing);
 
             if (session.results && session.results.length > 0) {
-                renderResults(session.results);
+                renderResults(session.results, session.usedModel);
             } else {
                 resultsContainer.innerHTML = '';
                 outputSection.classList.add('hidden');
+                usedModelBadge.classList.add('hidden');
             }
             
             renderTabList();
@@ -549,7 +557,6 @@ CRITICAL RULES for chunking output:
             const keyVal = apiKeyInput.value.trim();
             if (keyVal) {
                 localStorage.setItem('gemini_api_key', keyVal);
-                // キーが変更された可能性があるためモデルキャッシュをリセット
                 sessionStorage.removeItem('gemini_valid_model');
             }
 
@@ -727,9 +734,12 @@ CRITICAL RULES for chunking output:
             }
 
             try {
-                const results = await callGeminiAPI(apiKey, text, attachedFiles, targetSession.prompt);
+                // 結果配列と使用されたモデル名の両方を取得
+                const responseObj = await callGeminiAPI(apiKey, text, attachedFiles, targetSession.prompt);
                 
-                targetSession.results = results;
+                targetSession.results = responseObj.results;
+                targetSession.usedModel = responseObj.usedModel;
+
                 if (text) {
                     targetSession.title = text.substring(0, 15).replace(/\n/g, ' ') + '...';
                 } else {
@@ -737,7 +747,7 @@ CRITICAL RULES for chunking output:
                 }
 
                 if (currentSessionId === targetSession.id) {
-                    renderResults(results);
+                    renderResults(targetSession.results, targetSession.usedModel);
                 }
                 
                 saveStateToStorage();
@@ -767,12 +777,10 @@ CRITICAL RULES for chunking output:
             const data = await response.json();
             const models = data.models || [];
 
-            // generateContentに対応しているモデルを抽出
             const validModels = models.filter(m => 
                 m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
             );
 
-            // 優先順位: flash-lite > flash (安定版) > flash (その他) > pro > 最初に見つかったもの
             const preferred = 
                 validModels.find(m => m.name.includes('flash-lite') && !m.name.includes('preview')) ||
                 validModels.find(m => m.name.includes('flash') && !m.name.includes('preview')) ||
@@ -784,14 +792,11 @@ CRITICAL RULES for chunking output:
                 throw new Error("このAPIキーで利用可能なテキスト生成モデルが見つかりませんでした。");
             }
 
-            // "models/gemini-..." の形式になっているのでそのまま使う
             sessionStorage.setItem('gemini_valid_model', preferred.name);
-            console.log("Selected Gemini Model:", preferred.name);
             return preferred.name;
         }
 
         async function callGeminiAPI(apiKey, text, attachedFiles, promptStr, retries = 3, delay = 1000) {
-            // 自動で有効なモデル名を取得
             const modelName = await getAvailableModel(apiKey);
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
 
@@ -855,25 +860,25 @@ If the user asks a general question, put the context/question in 'sourceText' an
                     }
 
                     const result = await response.json();
+                    // レスポンス内の modelVersion（なければリクエスト時のモデル名）を取得
+                    const actualModel = result.modelVersion || modelName.replace('models/', '');
                     let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                     
                     if (rawText) {
                         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                        let parsedResults;
                         try {
                             const parsed = JSON.parse(rawText);
-                            if (Array.isArray(parsed)) {
-                                return parsed;
-                            } else {
-                                return [parsed];
-                            }
+                            parsedResults = Array.isArray(parsed) ? parsed : [parsed];
                         } catch (parseError) {
                             console.warn("JSON Parse Error, falling back to raw text rendering", parseError);
-                            return [{
+                            parsedResults = [{
                                 speaker: "",
                                 sourceText: "",
                                 translatedText: rawText
                             }];
                         }
+                        return { results: parsedResults, usedModel: actualModel };
                     } else {
                         console.error("Full API Response:", result);
                         const finishReason = result.candidates?.[0]?.finishReason;
@@ -894,9 +899,17 @@ If the user asks a general question, put the context/question in 'sourceText' an
             }
         }
 
-        function renderResults(dataArray) {
+        function renderResults(dataArray, modelName = '') {
             resultsContainer.innerHTML = '';
             if (!Array.isArray(dataArray) || dataArray.length === 0) return;
+
+            // モデル名バッジの更新
+            if (modelName) {
+                usedModelBadge.textContent = modelName;
+                usedModelBadge.classList.remove('hidden');
+            } else {
+                usedModelBadge.classList.add('hidden');
+            }
 
             dataArray.forEach(block => {
                 const card = document.createElement('div');
