@@ -11,7 +11,6 @@
         tailwind.config = {
             darkMode: 'class'
         }
-        // 初期読み込み時のテーマ判定
         const savedTheme = localStorage.getItem('bilingual_reader_theme') || 'system';
         if (savedTheme === 'dark' || (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -54,7 +53,6 @@
 
     <!-- サイドバー -->
     <aside id="sidebar" class="bg-gray-900 dark:bg-black border-r border-transparent dark:border-gray-800 text-white w-64 md:w-80 flex-shrink-0 flex flex-col h-full absolute md:relative z-30 transition-transform duration-300 -translate-x-full md:translate-x-0">
-        <!-- 上部アクションボタン群 -->
         <div class="p-3 flex gap-1.5 border-b border-gray-800">
             <button id="copyAllTabsBtn" title="全タブのレスポンスを一括コピー" class="flex-1 bg-gray-800 dark:bg-[#1C1C1E] hover:bg-gray-700 text-[12px] font-medium py-2 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -70,10 +68,8 @@
             </button>
         </div>
         
-        <!-- タブリスト -->
         <div id="tabList" class="flex-1 overflow-y-auto p-2 flex flex-col gap-1"></div>
 
-        <!-- 下部アクション (キャッシュクリア) -->
         <div class="p-3 border-t border-gray-800 bg-gray-900/80 dark:bg-black/80 backdrop-blur-sm">
             <button id="clearCacheBtn" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[13px] font-medium py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -93,7 +89,6 @@
             </button>
             <h1 class="text-[17px] font-semibold tracking-tight mx-auto select-none dark:text-white">Bilingual Reader</h1>
             
-            <!-- 薄い線の歯車アイコン -->
             <button id="settingsBtn" title="設定" class="p-1.5 -mr-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg ios-btn transition-colors">
                 <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.25" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -107,14 +102,14 @@
                 <!-- 入力エリア -->
                 <section class="flex flex-col gap-3">
                     <div class="flex justify-between items-end px-1">
-                        <label for="inputText" class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium">テキスト / 画像ペースト</label>
+                        <label for="inputText" class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium">テキスト / 画像ペースト（添付順を保持）</label>
                         <button id="clearBtn" class="text-[15px] text-[#007AFF] dark:text-[#60A5FA] ios-btn">クリア</button>
                     </div>
                     <div class="bg-white dark:bg-[#1C1C1E] rounded-[10px] overflow-hidden shadow-sm border border-gray-200 dark:border-gray-800 focus-within:ring-2 focus-within:ring-[#007AFF]/30 transition-all">
-                        <textarea id="inputText" rows="5" class="w-full p-4 text-[17px] leading-relaxed outline-none resize-none bg-transparent dark:text-white" placeholder="ここにテキストをペースト、またはクリップボードの画像を直接貼り付け (Ctrl+V)..."></textarea>
+                        <textarea id="inputText" rows="5" class="w-full p-4 text-[17px] leading-relaxed outline-none resize-none bg-transparent dark:text-white" placeholder="ここにテキストをペースト、またはクリップボードの画像を順番通りに貼り付け (Ctrl+V)..."></textarea>
                     </div>
 
-                    <!-- 添付ファイル選択 & プレビュー -->
+                    <!-- 添付ファイル選択 & プレビュー（順番番号付き） -->
                     <div class="flex flex-col gap-2 px-1">
                         <div class="flex items-center gap-2">
                             <input type="file" id="fileInput" multiple accept="image/*, application/pdf" class="text-[13px] text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[13px] file:font-semibold file:bg-[#007AFF]/10 dark:file:bg-[#007AFF]/20 file:text-[#007AFF] dark:file:text-[#60A5FA] hover:file:bg-[#007AFF]/20 dark:hover:file:bg-[#007AFF]/30 transition-colors cursor-pointer w-full">
@@ -122,17 +117,33 @@
                         <div id="previewContainer" class="flex flex-wrap gap-2 empty:hidden pt-1"></div>
                     </div>
 
-                    <div class="flex justify-end px-1 mt-1">
-                        <button id="togglePromptBtn" class="text-[13px] text-gray-500 dark:text-gray-400 underline ios-btn flex items-center gap-1">
-                            <span>⚙️ プロンプト設定 / APIキー設定</span>
+                    <div class="flex justify-between items-center px-1 mt-1">
+                        <span id="ocrStatusIndicator" class="text-[12px] text-gray-500 dark:text-gray-400"></span>
+                        <button id="togglePromptBtn" class="text-[13px] text-gray-500 dark:text-gray-400 underline ios-btn flex items-center gap-1 ml-auto">
+                            <span>⚙️ APIキー / OCR設定 / プロンプト</span>
                         </button>
                     </div>
                     
                     <div id="promptArea" class="hidden flex-col gap-4 p-4 bg-white dark:bg-[#1C1C1E] rounded-[10px] shadow-sm border border-gray-200 dark:border-gray-800">
                         <div class="flex flex-col gap-1">
                             <label for="apiKeyInput" class="text-[13px] text-gray-700 dark:text-gray-300 font-semibold">Gemini APIキー</label>
-                            <input type="password" id="apiKeyInput" class="w-full p-2.5 text-[14px] bg-gray-50 dark:bg-[#2C2C2E] rounded border border-gray-200 dark:border-gray-700 outline-none dark:text-white" placeholder="AIzaSy... または AQ...">
-                            <span class="text-[11px] text-gray-400">※キーはブラウザ内（localStorage）にのみ保存されます。</span>
+                            <input type="password" id="apiKeyInput" class="w-full p-2.5 text-[14px] bg-gray-50 dark:bg-[#2C2C2E] rounded border border-gray-200 dark:border-gray-700 outline-none dark:text-white" placeholder="AIzaSy...">
+                        </div>
+
+                        <!-- 外部OCR設定セクション -->
+                        <div class="flex flex-col gap-2 p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg border border-blue-200/60 dark:border-blue-900/40">
+                            <label for="ocrProviderSelect" class="text-[13px] text-gray-800 dark:text-gray-200 font-semibold">画像からの文字抽出（外部OCR経由）</label>
+                            <select id="ocrProviderSelect" class="w-full p-2 text-[14px] bg-white dark:bg-[#2C2C2E] rounded border border-gray-200 dark:border-gray-700 outline-none dark:text-white">
+                                <option value="none">使わない（画像を直接Geminiへ送信）</option>
+                                <option value="ocrspace">OCR.space API（無料APIキーで文字抽出→Gemini）</option>
+                                <option value="vision">Google Cloud Vision API（高精度文字抽出→Gemini）</option>
+                            </select>
+                            
+                            <div id="ocrKeyWrapper" class="hidden flex-col gap-1 mt-1">
+                                <label for="ocrApiKeyInput" id="ocrApiKeyLabel" class="text-[12px] text-gray-600 dark:text-gray-400 font-medium">OCR APIキー</label>
+                                <input type="password" id="ocrApiKeyInput" class="w-full p-2 text-[14px] bg-white dark:bg-[#2C2C2E] rounded border border-gray-200 dark:border-gray-700 outline-none dark:text-white" placeholder="APIキーを入力...">
+                                <span id="ocrHelpText" class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug"></span>
+                            </div>
                         </div>
 
                         <div class="flex flex-col gap-1">
@@ -147,7 +158,7 @@
                     </div>
                     
                     <button id="translateBtn" class="bg-[#007AFF] text-white rounded-[14px] py-3.5 px-4 font-semibold text-[17px] mt-2 shadow-sm transition-transform ios-btn flex justify-center items-center gap-2 w-full">
-                        <span>送信・翻訳する</span>
+                        <span id="translateBtnText">送信・翻訳する</span>
                         <div id="loadingSpinner" class="ios-spinner hidden"></div>
                     </button>
                 </section>
@@ -157,10 +168,8 @@
                     <div class="flex justify-between items-center px-1 mt-4 gap-2">
                         <div class="flex items-center gap-2 min-w-0">
                             <h2 class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium flex-shrink-0">結果</h2>
-                            <!-- 応答モデル表示バッジ -->
                             <span id="usedModelBadge" class="hidden text-[11px] font-mono bg-gray-200/80 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-md truncate"></span>
                         </div>
-                        <!-- 訳文一括開閉ボタン -->
                         <button id="toggleTranslationVisibilityBtn" class="text-[13px] text-[#007AFF] dark:text-[#60A5FA] font-medium flex items-center gap-1 ios-btn flex-shrink-0">
                             <svg id="toggleEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -215,13 +224,14 @@
 
     <script>
         const DEFAULT_PROMPT = `You are a versatile bilingual AI assistant optimized for mobile reading. 
-Analyze the user's input (text, questions, or images) and respond appropriately.
+Analyze the user's input (text, questions, or OCR-extracted book passages) and respond appropriately.
 
 If the user wants translation:
 - Identify the source language.
 - If it's English, translate to Japanese.
 - If it's Japanese, translate to English.
 - If it's another language, translate to Japanese.
+- Clean up any minor OCR line-break artifacts so sentences read naturally.
 
 If the user asks a general question or gives instructions:
 - Answer them helpfully in the same language they used, or Japanese if appropriate.
@@ -230,7 +240,6 @@ CRITICAL RULES for chunking output:
 - Divide long texts or explanations into logical chunks of roughly 7 to 8 lines.
 - The maximum length of a single chunk MUST NOT exceed 10 lines.
 - ALWAYS split at natural sentence boundaries.
-- 漫画等の画像のルビは表示しなくてよい
 `;
 
         let sessions = [];
@@ -241,11 +250,13 @@ CRITICAL RULES for chunking output:
         const fileInput = document.getElementById('fileInput');
         const previewContainer = document.getElementById('previewContainer');
         const translateBtn = document.getElementById('translateBtn');
+        const translateBtnText = document.getElementById('translateBtnText');
         const clearBtn = document.getElementById('clearBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const outputSection = document.getElementById('outputSection');
         const resultsContainer = document.getElementById('resultsContainer');
         const usedModelBadge = document.getElementById('usedModelBadge');
+        const ocrStatusIndicator = document.getElementById('ocrStatusIndicator');
         
         const toggleTranslationVisibilityBtn = document.getElementById('toggleTranslationVisibilityBtn');
         const toggleTranslationText = document.getElementById('toggleTranslationText');
@@ -254,6 +265,11 @@ CRITICAL RULES for chunking output:
         const promptArea = document.getElementById('promptArea');
         const togglePromptBtn = document.getElementById('togglePromptBtn');
         const apiKeyInput = document.getElementById('apiKeyInput');
+        const ocrProviderSelect = document.getElementById('ocrProviderSelect');
+        const ocrKeyWrapper = document.getElementById('ocrKeyWrapper');
+        const ocrApiKeyLabel = document.getElementById('ocrApiKeyLabel');
+        const ocrApiKeyInput = document.getElementById('ocrApiKeyInput');
+        const ocrHelpText = document.getElementById('ocrHelpText');
         const promptInput = document.getElementById('promptInput');
         const resetPromptBtn = document.getElementById('resetPromptBtn');
         const applyPromptBtn = document.getElementById('applyPromptBtn');
@@ -279,6 +295,7 @@ CRITICAL RULES for chunking output:
         const closeSettingsDrawerBtn = document.getElementById('closeSettingsDrawerBtn');
         const themeSelect = document.getElementById('themeSelect');
 
+        // テーマ設定
         function applyTheme(themeValue) {
             const htmlEl = document.documentElement;
             if (themeValue === 'dark' || (themeValue === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -287,42 +304,63 @@ CRITICAL RULES for chunking output:
                 htmlEl.classList.remove('dark');
             }
         }
-
         const currentSavedTheme = localStorage.getItem('bilingual_reader_theme') || 'system';
         themeSelect.value = currentSavedTheme;
-        
         themeSelect.addEventListener('change', (e) => {
-            const newTheme = e.target.value;
-            localStorage.setItem('bilingual_reader_theme', newTheme);
-            applyTheme(newTheme);
+            localStorage.setItem('bilingual_reader_theme', e.target.value);
+            applyTheme(e.target.value);
+        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('bilingual_reader_theme') === 'system') applyTheme('system');
         });
 
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (localStorage.getItem('bilingual_reader_theme') === 'system') {
-                applyTheme('system');
-            }
-        });
-
+        // 設定ドロワー
         function openSettingsDrawer() {
             settingsDrawerOverlay.classList.remove('hidden');
             void settingsDrawerOverlay.offsetWidth; 
             settingsDrawerOverlay.classList.remove('opacity-0');
             settingsDrawer.classList.remove('translate-x-full');
         }
-
         function closeSettingsDrawer() {
             settingsDrawerOverlay.classList.add('opacity-0');
             settingsDrawer.classList.add('translate-x-full');
-            setTimeout(() => {
-                settingsDrawerOverlay.classList.add('hidden');
-            }, 300);
+            setTimeout(() => settingsDrawerOverlay.classList.add('hidden'), 300);
         }
-
         settingsBtn.addEventListener('click', openSettingsDrawer);
         closeSettingsDrawerBtn.addEventListener('click', closeSettingsDrawer);
         settingsDrawerOverlay.addEventListener('click', closeSettingsDrawer);
 
+        // OCR設定UIの連動
+        function updateOcrSettingsUI() {
+            const provider = ocrProviderSelect.value;
+            if (provider === 'none') {
+                ocrKeyWrapper.classList.add('hidden');
+                ocrKeyWrapper.classList.remove('flex');
+                ocrStatusIndicator.textContent = '';
+            } else if (provider === 'ocrspace') {
+                ocrKeyWrapper.classList.remove('hidden');
+                ocrKeyWrapper.classList.add('flex');
+                ocrApiKeyLabel.textContent = 'OCR.space APIキー';
+                ocrApiKeyInput.placeholder = 'K8... (無料登録で即時発行)';
+                ocrHelpText.textContent = '※ocr.space/ocrapi で無料キーを取得できます。添付順に文字抽出してからGeminiへテキストのみ送信します。';
+                ocrStatusIndicator.textContent = '🔍 外部OCR有効: OCR.space';
+            } else if (provider === 'vision') {
+                ocrKeyWrapper.classList.remove('hidden');
+                ocrKeyWrapper.classList.add('flex');
+                ocrApiKeyLabel.textContent = 'Google Cloud Vision APIキー（空欄なら上のGeminiキーを使用）';
+                ocrApiKeyInput.placeholder = 'AIzaSy... (空欄可)';
+                ocrHelpText.textContent = '※Google CloudでVision APIを有効化したプロジェクトのAPIキーを使用します。書籍の段組み・段落を非常に高精度に認識します。';
+                ocrStatusIndicator.textContent = '🔍 外部OCR有効: Google Vision';
+            }
+        }
+
+        ocrProviderSelect.addEventListener('change', updateOcrSettingsUI);
+
+        // 初期値の復元
         apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+        ocrProviderSelect.value = localStorage.getItem('bilingual_reader_ocr_provider') || 'none';
+        ocrApiKeyInput.value = localStorage.getItem('bilingual_reader_ocr_key') || '';
+        updateOcrSettingsUI();
 
         if (!loadStateFromStorage()) {
             createNewSession();
@@ -345,38 +383,29 @@ CRITICAL RULES for chunking output:
         function loadStateFromStorage() {
             const savedStr = localStorage.getItem('bilingual_reader_sessions');
             if (!savedStr) return false;
-            
             try {
                 sessions = JSON.parse(savedStr);
                 if (!Array.isArray(sessions) || sessions.length === 0) return false;
-
                 sessions.forEach(s => {
                     s.isProcessing = false;
                     if (!s.attachedFiles) s.attachedFiles = [];
                     if (!s.usedModel) s.usedModel = '';
                 });
-
                 const savedId = localStorage.getItem('bilingual_reader_current_id');
                 currentSessionId = sessions.find(s => s.id === savedId) ? savedId : sessions[0].id;
-                
                 switchSession(currentSessionId);
                 return true;
             } catch (e) {
-                console.error("Failed to load sessions from storage:", e);
                 return false;
             }
         }
 
         function createNewSession() {
             const id = Date.now().toString();
-
-            let initialPrompt = DEFAULT_PROMPT;
             const currentSession = sessions.find(s => s.id === currentSessionId);
-            if (currentSession && currentSession.prompt) {
-                initialPrompt = currentSession.prompt;
-            } else {
-                initialPrompt = localStorage.getItem('bilingual_reader_latest_prompt') || DEFAULT_PROMPT;
-            }
+            const initialPrompt = (currentSession && currentSession.prompt) 
+                ? currentSession.prompt 
+                : (localStorage.getItem('bilingual_reader_latest_prompt') || DEFAULT_PROMPT);
 
             const newSession = {
                 id: id,
@@ -395,7 +424,6 @@ CRITICAL RULES for chunking output:
 
         function switchSession(id) {
             if (currentSessionId) saveCurrentSessionInput();
-            
             currentSessionId = id;
             const session = sessions.find(s => s.id === id);
             
@@ -419,16 +447,16 @@ CRITICAL RULES for chunking output:
             saveStateToStorage();
         }
 
-        function updateTranslateButtonState(isProcessing) {
+        function updateTranslateButtonState(isProcessing, statusLabel = '処理中...') {
             if (isProcessing) {
                 translateBtn.disabled = true;
                 translateBtn.classList.add('opacity-70');
-                translateBtn.querySelector('span').textContent = '処理中...';
+                translateBtnText.textContent = statusLabel;
                 loadingSpinner.classList.remove('hidden');
             } else {
                 translateBtn.disabled = false;
                 translateBtn.classList.remove('opacity-70');
-                translateBtn.querySelector('span').textContent = '送信・翻訳する';
+                translateBtnText.textContent = '送信・翻訳する';
                 loadingSpinner.classList.add('hidden');
             }
         }
@@ -450,11 +478,9 @@ CRITICAL RULES for chunking output:
                 const isActive = session.id === currentSessionId;
                 const btn = document.createElement('button');
                 btn.className = `text-left w-full px-3 py-2 rounded-lg text-[14px] truncate transition-colors ios-btn flex items-center justify-between ${isActive ? 'bg-gray-800 dark:bg-gray-700 text-white font-semibold' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`;
-                
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'truncate';
                 titleSpan.textContent = (session.isProcessing ? '⏳ ' : '') + session.title;
-
                 btn.appendChild(titleSpan);
                 btn.onclick = () => switchSession(session.id);
                 tabList.appendChild(btn);
@@ -464,24 +490,16 @@ CRITICAL RULES for chunking output:
         function updateTranslationVisibilityUI() {
             const translatedElements = document.querySelectorAll('.translated-content');
             translatedElements.forEach(el => {
-                if (isTranslationVisible) {
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
+                if (isTranslationVisible) el.classList.remove('hidden');
+                else el.classList.add('hidden');
             });
 
             if (isTranslationVisible) {
                 toggleTranslationText.textContent = '回答(訳文)を非表示';
-                toggleEyeIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                `;
+                toggleEyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
             } else {
                 toggleTranslationText.textContent = '回答(訳文)を表示';
-                toggleEyeIcon.innerHTML = `
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                `;
+                toggleEyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;
             }
         }
 
@@ -509,7 +527,6 @@ CRITICAL RULES for chunking output:
             sidebarOverlay.classList.remove('hidden');
         });
         sidebarOverlay.addEventListener('click', closeSidebarMobile);
-
         function closeSidebarMobile() {
             sidebar.classList.add('-translate-x-full');
             sidebarOverlay.classList.add('hidden');
@@ -535,6 +552,9 @@ CRITICAL RULES for chunking output:
                 const session = sessions.find(s => s.id === currentSessionId);
                 promptInput.value = session.prompt;
                 apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+                ocrProviderSelect.value = localStorage.getItem('bilingual_reader_ocr_provider') || 'none';
+                ocrApiKeyInput.value = localStorage.getItem('bilingual_reader_ocr_key') || '';
+                updateOcrSettingsUI();
                 promptArea.classList.remove('hidden');
                 promptArea.classList.add('flex');
             } else {
@@ -543,15 +563,12 @@ CRITICAL RULES for chunking output:
             }
         });
 
-        resetPromptBtn.addEventListener('click', () => {
-            promptInput.value = DEFAULT_PROMPT;
-        });
+        resetPromptBtn.addEventListener('click', () => promptInput.value = DEFAULT_PROMPT);
 
         applyPromptBtn.addEventListener('click', () => {
             const session = sessions.find(s => s.id === currentSessionId);
             const chosenPrompt = promptInput.value.trim() || DEFAULT_PROMPT;
             session.prompt = chosenPrompt;
-            
             localStorage.setItem('bilingual_reader_latest_prompt', chosenPrompt);
 
             const keyVal = apiKeyInput.value.trim();
@@ -560,11 +577,17 @@ CRITICAL RULES for chunking output:
                 sessionStorage.removeItem('gemini_valid_model');
             }
 
+            localStorage.setItem('bilingual_reader_ocr_provider', ocrProviderSelect.value);
+            localStorage.setItem('bilingual_reader_ocr_key', ocrApiKeyInput.value.trim());
+            updateOcrSettingsUI();
+
             promptArea.classList.add('hidden');
             promptArea.classList.remove('flex');
             saveStateToStorage();
+            showToast("設定を保存しました");
         });
 
+        // 画像ペースト（添付した順番通り末尾に追加）
         window.addEventListener('paste', async (e) => {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
             const session = sessions.find(s => s.id === currentSessionId);
@@ -577,7 +600,7 @@ CRITICAL RULES for chunking output:
                     const blob = item.getAsFile();
                     const b64Data = await fileToBase64(blob);
                     session.attachedFiles.push({
-                        name: `ペースト画像_${Date.now()}`,
+                        name: `ペースト画像_${session.attachedFiles.length + 1}`,
                         mimeType: b64Data.mimeType,
                         data: b64Data.data
                     });
@@ -586,10 +609,11 @@ CRITICAL RULES for chunking output:
             }
             if (imageFound) {
                 renderPreviews(session);
-                showToast("画像を添付しました");
+                showToast(`画像を添付しました (${session.attachedFiles.length}枚目)`);
             }
         });
 
+        // ファイル選択（選択順通り末尾に追加）
         fileInput.addEventListener('change', async (e) => {
             const session = sessions.find(s => s.id === currentSessionId);
             if (!session) return;
@@ -606,6 +630,7 @@ CRITICAL RULES for chunking output:
             fileInput.value = '';
         });
 
+        // プレビュー表示（処理される順番番号を表示）
         function renderPreviews(session) {
             previewContainer.innerHTML = '';
             if (!session.attachedFiles || session.attachedFiles.length === 0) return;
@@ -613,6 +638,12 @@ CRITICAL RULES for chunking output:
             session.attachedFiles.forEach((file, index) => {
                 const wrap = document.createElement('div');
                 wrap.className = 'relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#2C2C2E] flex items-center justify-center';
+
+                // 順番番号バッジ
+                const orderBadge = document.createElement('span');
+                orderBadge.className = 'absolute bottom-0 left-0 bg-[#007AFF] text-white text-[10px] font-bold px-1.5 py-0.2 rounded-tr z-10';
+                orderBadge.textContent = `${index + 1}`;
+                wrap.appendChild(orderBadge);
 
                 if (file.mimeType.startsWith('image/')) {
                     const img = document.createElement('img');
@@ -627,7 +658,7 @@ CRITICAL RULES for chunking output:
                 }
 
                 const delBtn = document.createElement('button');
-                delBtn.className = 'absolute top-0 right-0 bg-black/60 text-white rounded-bl p-0.5 hover:bg-red-600 transition-colors ios-btn';
+                delBtn.className = 'absolute top-0 right-0 bg-black/60 text-white rounded-bl p-0.5 hover:bg-red-600 transition-colors ios-btn z-10';
                 delBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
                 delBtn.onclick = (ev) => {
                     ev.stopPropagation();
@@ -650,6 +681,104 @@ CRITICAL RULES for chunking output:
                 });
                 reader.onerror = error => reject(error);
             });
+        }
+
+        // 画像を1MB未満にリサイズ・圧縮するヘルパー（OCR.spaceの1MB上限対策）
+        function compressImageIfNeeded(base64Data, mimeType, maxBytes = 900 * 1024) {
+            return new Promise((resolve) => {
+                // おおよそのバイト数計算
+                const approxBytes = (base64Data.length * 3) / 4;
+                if (approxBytes <= maxBytes || !mimeType.startsWith('image/')) {
+                    resolve({ data: base64Data, mimeType: mimeType });
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    // 長辺を最大1800pxに縮小
+                    const maxDim = 1800;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    resolve({
+                        data: compressedDataUrl.split(',')[1],
+                        mimeType: 'image/jpeg'
+                    });
+                };
+                img.onerror = () => resolve({ data: base64Data, mimeType: mimeType });
+                img.src = `data:${mimeType};base64,${base64Data}`;
+            });
+        }
+
+        // 外部OCRエンジンによる文字抽出（添付順通りに1枚ずつ直列処理）
+        async function extractTextViaExternalOcr(files, provider, ocrKey, geminiKey, onProgress) {
+            const extractedTexts = [];
+
+            for (let i = 0; i < files.length; i++) {
+                onProgress(`文字抽出中 (${i + 1}/${files.length}枚目)...`);
+                const file = files[i];
+
+                if (provider === 'ocrspace') {
+                    if (!ocrKey) {
+                        throw new Error("OCR.spaceのAPIキーが設定されていません。設定画面から入力してください。");
+                    }
+                    const compressed = await compressImageIfNeeded(file.data, file.mimeType);
+                    const formData = new FormData();
+                    formData.append('apikey', ocrKey);
+                    formData.append('base64Image', `data:${compressed.mimeType};base64,${compressed.data}`);
+                    formData.append('language', 'eng'); // 英語小説向け（必要に応じて自動判定エンジン2を使用）
+                    formData.append('OCREngine', '2'); // エンジン2は書籍や複雑な背景に強い
+
+                    const res = await fetch('https://api.ocr.space/parse/image', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!res.ok) throw new Error(`OCR.space 通信エラー: ${res.status}`);
+                    const json = await res.json();
+                    if (json.IsErroredOnProcessing) {
+                        throw new Error(`OCR.space エラー (${i + 1}枚目): ${json.ErrorMessage?.[0] || '文字抽出に失敗しました'}`);
+                    }
+                    const pageText = json.ParsedResults?.[0]?.ParsedText || '';
+                    if (pageText.trim()) extractedTexts.push(pageText.trim());
+
+                } else if (provider === 'vision') {
+                    const effectiveKey = ocrKey || geminiKey;
+                    const visionUrl = `https://vision.googleapis.com/v1/images:annotate?key=${effectiveKey}`;
+                    const res = await fetch(visionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            requests: [{
+                                image: { content: file.data },
+                                features: [{ type: 'DOCUMENT_TEXT_DETECTION' }]
+                            }]
+                        })
+                    });
+                    if (!res.ok) {
+                        const errJson = await res.json().catch(() => ({}));
+                        throw new Error(`Google Vision APIエラー (${res.status}): ${errJson.error?.message || 'APIが有効化されているか確認してください'}`);
+                    }
+                    const json = await res.json();
+                    const pageText = json.responses?.[0]?.fullTextAnnotation?.text || '';
+                    if (pageText.trim()) extractedTexts.push(pageText.trim());
+                }
+            }
+
+            return extractedTexts.join('\n\n');
         }
 
         async function copyToClipboard(text, successMsg = "コピーしました") {
@@ -677,8 +806,7 @@ CRITICAL RULES for chunking output:
                 showError("現在のタブにコピーする結果がありません。");
                 return;
             }
-            const output = formatSessionResults(session.results);
-            copyToClipboard(output, "タブ内の結果をコピーしました");
+            copyToClipboard(formatSessionResults(session.results), "タブ内の結果をコピーしました");
         });
 
         copyAllTabsBtn.addEventListener('click', () => {
@@ -687,14 +815,8 @@ CRITICAL RULES for chunking output:
                 showError("コピー可能な結果が存在しません。");
                 return;
             }
-
             const orderedSessions = [...validSessions].reverse();
-            const combinedText = orderedSessions.map((s) => {
-                const header = `=== [${s.title}] ===`;
-                const content = formatSessionResults(s.results);
-                return `${header}\n\n${content}`;
-            }).join('\n\n---\n\n');
-
+            const combinedText = orderedSessions.map((s) => `=== [${s.title}] ===\n\n${formatSessionResults(s.results)}`).join('\n\n---\n\n');
             copyToClipboard(combinedText, "全タブの結果を一括コピーしました");
         });
 
@@ -711,21 +833,21 @@ CRITICAL RULES for chunking output:
         async function processTranslation() {
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
-                showError("APIキーが設定されていません。「プロンプト設定 / APIキー設定」からAPIキーを入力してください。");
+                showError("APIキーが設定されていません。「APIキー / OCR設定 / プロンプト」からGemini APIキーを入力してください。");
                 return;
             }
 
-            const text = inputText.value.trim();
+            let textToSend = inputText.value.trim();
             const targetSession = sessions.find(s => s.id === currentSessionId);
-            const attachedFiles = targetSession.attachedFiles || [];
+            let filesToSend = targetSession.attachedFiles || [];
 
-            if (!text && attachedFiles.length === 0) {
+            if (!textToSend && filesToSend.length === 0) {
                 showError("テキストまたは画像を入力・ペーストしてください。");
                 return;
             }
 
             targetSession.isProcessing = true;
-            updateTranslateButtonState(true);
+            updateTranslateButtonState(true, '準備中...');
             renderTabList();
 
             if (currentSessionId === targetSession.id) {
@@ -734,14 +856,43 @@ CRITICAL RULES for chunking output:
             }
 
             try {
-                // 結果配列と使用されたモデル名の両方を取得
-                const responseObj = await callGeminiAPI(apiKey, text, attachedFiles, targetSession.prompt);
+                const ocrProvider = localStorage.getItem('bilingual_reader_ocr_provider') || 'none';
+                const ocrKey = localStorage.getItem('bilingual_reader_ocr_key') || '';
+
+                // 外部OCRが有効で画像が添付されている場合、順番通りに文字抽出してテキスト化
+                if (ocrProvider !== 'none' && filesToSend.length > 0) {
+                    const extractedText = await extractTextViaExternalOcr(
+                        filesToSend,
+                        ocrProvider,
+                        ocrKey,
+                        apiKey,
+                        (statusMsg) => {
+                            if (currentSessionId === targetSession.id) {
+                                updateTranslateButtonState(true, statusMsg);
+                            }
+                        }
+                    );
+
+                    if (!extractedText && !textToSend) {
+                        throw new Error("画像から文字を検出できませんでした。");
+                    }
+
+                    // 入力テキストと抽出したテキストを結合し、Geminiには画像は送らない（テキストのみ送信）
+                    textToSend = [textToSend, extractedText].filter(Boolean).join('\n\n');
+                    filesToSend = []; 
+                }
+
+                if (currentSessionId === targetSession.id) {
+                    updateTranslateButtonState(true, 'Geminiで翻訳中...');
+                }
+
+                const responseObj = await callGeminiAPI(apiKey, textToSend, filesToSend, targetSession.prompt);
                 
                 targetSession.results = responseObj.results;
                 targetSession.usedModel = responseObj.usedModel;
 
-                if (text) {
-                    targetSession.title = text.substring(0, 15).replace(/\n/g, ' ') + '...';
+                if (textToSend) {
+                    targetSession.title = textToSend.substring(0, 15).replace(/\n/g, ' ') + '...';
                 } else {
                     targetSession.title = "画像解析";
                 }
@@ -754,7 +905,7 @@ CRITICAL RULES for chunking output:
 
             } catch (err) {
                 console.error(err);
-                showError(err.message || "通信中にエラーが発生しました。通信状況やAPIキーをご確認ください。");
+                showError(err.message || "処理中にエラーが発生しました。");
             } finally {
                 targetSession.isProcessing = false;
                 if (currentSessionId === targetSession.id) {
@@ -764,7 +915,6 @@ CRITICAL RULES for chunking output:
             }
         }
 
-        // 利用可能なモデルをAPIから自動取得してキャッシュする関数
         async function getAvailableModel(apiKey) {
             const cachedModel = sessionStorage.getItem('gemini_valid_model');
             if (cachedModel) return cachedModel;
@@ -800,202 +950,4 @@ CRITICAL RULES for chunking output:
             const modelName = await getAvailableModel(apiKey);
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
 
-            const parts = [];
-            if (text) parts.push({ text: text });
-            attachedFiles.forEach(fileData => {
-                parts.push({
-                    inlineData: { mimeType: fileData.mimeType, data: fileData.data }
-                });
-            });
-
-            const jsonInstruction = `\n\nYOU MUST RESPOND ONLY WITH A VALID JSON ARRAY. No explanations, no markdown blocks outside the JSON.
-Format:
-[
-  {
-    "speaker": "Speaker Name (or empty string. Use if applicable)",
-    "sourceText": "Original text segment, user query, or topic description",
-    "translatedText": "Translated text, answer, or your main response"
-  }
-]
-If the user asks a general question, put the context/question in 'sourceText' and your answer in 'translatedText'.`;
-
-            const payload = {
-                contents: [{ parts: parts }],
-                systemInstruction: {
-                    parts: [{ text: promptStr + jsonInstruction }]
-                },
-                generationConfig: {
-                    temperature: 0.2,
-                    responseMimeType: "application/json"
-                },
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ]
-            };
-
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 400) throw new Error("APIエラー (400): リクエスト形式が無効です。");
-                        if (response.status === 403) throw new Error("APIエラー (403): APIキーが無効か権限がありません。");
-                        if (response.status === 404) {
-                            sessionStorage.removeItem('gemini_valid_model');
-                            throw new Error(`APIエラー (404): モデル(${modelName})が見つかりません。もう一度お試しください。`);
-                        }
-                        if (response.status === 429) {
-                            const rateError = new Error("API制限 (429): リクエスト上限に達しました。1〜2分ほど待ってから再度お試しください。");
-                            rateError.noRetry = true;
-                            throw rateError;
-                        }
-                        throw new Error(`APIエラー: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    // レスポンス内の modelVersion（なければリクエスト時のモデル名）を取得
-                    const actualModel = result.modelVersion || modelName.replace('models/', '');
-                    let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    if (rawText) {
-                        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-                        let parsedResults;
-                        try {
-                            const parsed = JSON.parse(rawText);
-                            parsedResults = Array.isArray(parsed) ? parsed : [parsed];
-                        } catch (parseError) {
-                            console.warn("JSON Parse Error, falling back to raw text rendering", parseError);
-                            parsedResults = [{
-                                speaker: "",
-                                sourceText: "",
-                                translatedText: rawText
-                            }];
-                        }
-                        return { results: parsedResults, usedModel: actualModel };
-                    } else {
-                        console.error("Full API Response:", result);
-                        const finishReason = result.candidates?.[0]?.finishReason;
-                        
-                        if (finishReason === 'SAFETY') {
-                            throw new Error("APIエラー: 不適切と判定されたため、セーフティフィルターによって回答がブロックされました。");
-                        } else if (finishReason === 'RECITATION') {
-                            throw new Error("APIエラー: 著作権保護（既存の文章との一致）により回答がブロックされました。");
-                        } else {
-                            throw new Error("APIレスポンスにテキストが含まれていません。");
-                        }
-                    }
-                } catch (error) {
-                    if (error.noRetry || i === retries - 1) throw error;
-                    await new Promise(res => setTimeout(res, delay));
-                    delay *= 2;
-                }
-            }
-        }
-
-        function renderResults(dataArray, modelName = '') {
-            resultsContainer.innerHTML = '';
-            if (!Array.isArray(dataArray) || dataArray.length === 0) return;
-
-            // モデル名バッジの更新
-            if (modelName) {
-                usedModelBadge.textContent = modelName;
-                usedModelBadge.classList.remove('hidden');
-            } else {
-                usedModelBadge.classList.add('hidden');
-            }
-
-            dataArray.forEach(block => {
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-[#1C1C1E] rounded-[14px] shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden relative group";
-
-                let speakerHtml = '';
-                if (block.speaker) {
-                    speakerHtml = `
-                        <div class="px-4 py-2.5 bg-gray-50 dark:bg-[#2C2C2E] border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                            <span class="text-[13px] font-semibold text-gray-500 dark:text-gray-400">${escapeHtml(block.speaker)}</span>
-                        </div>
-                    `;
-                }
-
-                const cardId = 'card_' + Math.random().toString(36).substr(2, 9);
-                window[cardId] = block;
-
-                const copyBtnHtml = `
-                    <button class="absolute top-2 right-2 p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 bg-white/80 dark:bg-black/80 rounded-md opacity-0 group-hover:opacity-100 transition-opacity ios-btn" onclick="copyCardById('${cardId}')">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    </button>
-                `;
-
-                const sourceHtml = block.sourceText ? `
-                    <div class="text-[16px] text-gray-900 dark:text-gray-100 leading-relaxed font-sans pr-8">
-                        ${escapeHtml(block.sourceText).replace(/\n/g, '<br>')}
-                    </div>
-                ` : '';
-
-                const translatedHtml = `
-                    <div class="translated-content ${isTranslationVisible ? '' : 'hidden'} flex flex-col gap-3">
-                        ${block.sourceText ? '<div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>' : ''}
-                        <div class="text-[16px] text-[#007AFF] dark:text-[#60A5FA] leading-relaxed font-sans pr-8">
-                            ${escapeHtml(block.translatedText || '').replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-                `;
-
-                const textHtml = `
-                    <div class="p-4 flex flex-col gap-3 ${speakerHtml ? 'pt-4' : 'pt-5'}">
-                        ${sourceHtml}
-                        ${translatedHtml}
-                    </div>
-                `;
-
-                card.innerHTML = speakerHtml + copyBtnHtml + textHtml;
-                resultsContainer.appendChild(card);
-            });
-
-            outputSection.classList.remove('hidden');
-            setTimeout(() => {
-                outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-
-        function showToast(msg = "コピーしました") {
-            toast.textContent = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 2000);
-        }
-
-        function showError(msg) {
-            errorMessage.textContent = msg;
-            errorModal.classList.remove('hidden');
-            errorModal.classList.add('flex');
-            requestAnimationFrame(() => {
-                errorModal.classList.remove('opacity-0');
-                errorModalBox.classList.remove('scale-95');
-            });
-        }
-
-        function closeError() {
-            errorModal.classList.add('opacity-0');
-            errorModalBox.classList.add('scale-95');
-            setTimeout(() => {
-                errorModal.classList.add('hidden');
-                errorModal.classList.remove('flex');
-            }, 300);
-        }
-
-        function escapeHtml(str) {
-            if (!str) return "";
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-    </script>
-</body>
-</html>
+            const parts
