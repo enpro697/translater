@@ -142,7 +142,7 @@
 
                         <div class="flex justify-between items-center mt-1">
                             <button id="resetPromptBtn" class="text-[14px] text-red-500 dark:text-red-400 font-medium ios-btn">デフォルトに戻す</button>
-                            <button id="applyPromptBtn" class="text-[14px] bg-gray-800 dark:bg-gray-100 text-white dark:text-black px-4 py-2 rounded-[8px] font-medium ios-btn">設定を保存</button>
+                            <button id="applyPromptBtn" class="text-[14px] bg-gray-800 dark:bg-gray-100 text-white dark:text-black px-4 py-2 rounded-[8px] font-medium ios-btn">設定を保存して閉じる</button>
                         </div>
                     </div>
                     
@@ -212,7 +212,7 @@
     <script>
         const DEFAULT_PROMPT = `You are a versatile bilingual AI assistant optimized for mobile reading. 
 Analyze the user's input (text, questions, or images) and respond appropriately.
-This is for personal learning and reading comprehension of a legally purchased book.
+
 If the user wants translation:
 - Identify the source language.
 - If it's English, translate to Japanese.
@@ -549,6 +549,8 @@ CRITICAL RULES for chunking output:
             const keyVal = apiKeyInput.value.trim();
             if (keyVal) {
                 localStorage.setItem('gemini_api_key', keyVal);
+                // キーが変更された可能性があるためモデルキャッシュをリセット
+                sessionStorage.removeItem('gemini_valid_model');
             }
 
             promptArea.classList.add('hidden');
@@ -752,8 +754,46 @@ CRITICAL RULES for chunking output:
             }
         }
 
+        // 利用可能なモデルをAPIから自動取得してキャッシュする関数
+        async function getAvailableModel(apiKey) {
+            const cachedModel = sessionStorage.getItem('gemini_valid_model');
+            if (cachedModel) return cachedModel;
+
+            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+            const response = await fetch(listUrl);
+            if (!response.ok) {
+                throw new Error(`モデル一覧の取得に失敗しました (${response.status}): APIキーを確認してください。`);
+            }
+            const data = await response.json();
+            const models = data.models || [];
+
+            // generateContentに対応しているモデルを抽出
+            const validModels = models.filter(m => 
+                m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+            );
+
+            // 優先順位: flash-lite > flash (安定版) > flash (その他) > pro > 最初に見つかったもの
+            const preferred = 
+                validModels.find(m => m.name.includes('flash-lite') && !m.name.includes('preview')) ||
+                validModels.find(m => m.name.includes('flash') && !m.name.includes('preview')) ||
+                validModels.find(m => m.name.includes('flash')) ||
+                validModels.find(m => m.name.includes('pro')) ||
+                validModels[0];
+
+            if (!preferred) {
+                throw new Error("このAPIキーで利用可能なテキスト生成モデルが見つかりませんでした。");
+            }
+
+            // "models/gemini-..." の形式になっているのでそのまま使う
+            sessionStorage.setItem('gemini_valid_model', preferred.name);
+            console.log("Selected Gemini Model:", preferred.name);
+            return preferred.name;
+        }
+
         async function callGeminiAPI(apiKey, text, attachedFiles, promptStr, retries = 3, delay = 1000) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            // 自動で有効なモデル名を取得
+            const modelName = await getAvailableModel(apiKey);
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
 
             const parts = [];
             if (text) parts.push({ text: text });
@@ -783,7 +823,6 @@ If the user asks a general question, put the context/question in 'sourceText' an
                     temperature: 0.2,
                     responseMimeType: "application/json"
                 },
-                // セーフティフィルターの制限を解除（ブロックしないように設定）
                 safetySettings: [
                     { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
                     { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -803,7 +842,15 @@ If the user asks a general question, put the context/question in 'sourceText' an
                     if (!response.ok) {
                         if (response.status === 400) throw new Error("APIエラー (400): リクエスト形式が無効です。");
                         if (response.status === 403) throw new Error("APIエラー (403): APIキーが無効か権限がありません。");
-                        if (response.status === 404) throw new Error("APIエラー (404): モデルエンドポイントが見つかりません。");
+                        if (response.status === 404) {
+                            sessionStorage.removeItem('gemini_valid_model');
+                            throw new Error(`APIエラー (404): モデル(${modelName})が見つかりません。もう一度お試しください。`);
+                        }
+                        if (response.status === 429) {
+                            const rateError = new Error("API制限 (429): リクエスト上限に達しました。1〜2分ほど待ってから再度お試しください。");
+                            rateError.noRetry = true;
+                            throw rateError;
+                        }
                         throw new Error(`APIエラー: ${response.status}`);
                     }
 
@@ -828,20 +875,19 @@ If the user asks a general question, put the context/question in 'sourceText' an
                             }];
                         }
                     } else {
-                        // エラーの詳細な理由をコンソールに出力し、画面にも表示する
                         console.error("Full API Response:", result);
                         const finishReason = result.candidates?.[0]?.finishReason;
                         
                         if (finishReason === 'SAFETY') {
-                            throw new Error("APIエラー: 不適切と判定されたため、Geminiのセーフティフィルターによって回答がブロックされました。");
+                            throw new Error("APIエラー: 不適切と判定されたため、セーフティフィルターによって回答がブロックされました。");
                         } else if (finishReason === 'RECITATION') {
                             throw new Error("APIエラー: 著作権保護（既存の文章との一致）により回答がブロックされました。");
                         } else {
-                            throw new Error("APIレスポンスにテキストが含まれていません。（詳細はブラウザの開発者ツールコンソールをご確認ください）");
+                            throw new Error("APIレスポンスにテキストが含まれていません。");
                         }
                     }
                 } catch (error) {
-                    if (i === retries - 1) throw error;
+                    if (error.noRetry || i === retries - 1) throw error;
                     await new Promise(res => setTimeout(res, delay));
                     delay *= 2;
                 }
