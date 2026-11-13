@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Bilingual Reader</title>
+    <title>Bilingual Reader & Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -124,7 +124,7 @@
 
                     <div class="flex justify-end px-1 mt-1">
                         <button id="togglePromptBtn" class="text-[13px] text-gray-500 dark:text-gray-400 underline ios-btn flex items-center gap-1">
-                            <span>⚙️ 翻訳ルール設定 / APIキー設定</span>
+                            <span>⚙️ プロンプト設定 / APIキー設定</span>
                         </button>
                     </div>
                     
@@ -147,7 +147,7 @@
                     </div>
                     
                     <button id="translateBtn" class="bg-[#007AFF] text-white rounded-[14px] py-3.5 px-4 font-semibold text-[17px] mt-2 shadow-sm transition-transform ios-btn flex justify-center items-center gap-2 w-full">
-                        <span>対訳を生成する</span>
+                        <span>送信・翻訳する</span>
                         <div id="loadingSpinner" class="ios-spinner hidden"></div>
                     </button>
                 </section>
@@ -155,14 +155,14 @@
                 <!-- 出力エリア -->
                 <section id="outputSection" class="flex flex-col gap-4 pb-12 hidden">
                     <div class="flex justify-between items-center px-1 mt-4">
-                        <h2 class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium">翻訳結果</h2>
+                        <h2 class="text-[13px] text-gray-500 dark:text-gray-400 uppercase font-medium">結果</h2>
                         <!-- 訳文一括開閉ボタン -->
                         <button id="toggleTranslationVisibilityBtn" class="text-[13px] text-[#007AFF] dark:text-[#60A5FA] font-medium flex items-center gap-1 ios-btn">
                             <svg id="toggleEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            <span id="toggleTranslationText">訳文を非表示</span>
+                            <span id="toggleTranslationText">回答(訳文)を非表示</span>
                         </button>
                     </div>
                     <div id="resultsContainer" class="flex flex-col gap-4"></div>
@@ -210,12 +210,23 @@
     </div>
 
     <script>
-        const DEFAULT_PROMPT = `You are a bilingual translator optimized for mobile reading. Parse the user's text (X/Twitter post or dialogue, and attached images), identify speakers or paragraph breaks, and provide structured translations.
+        // 翻訳と一般的な質問の両方に対応できる柔軟なプロンプトに変更
+        const DEFAULT_PROMPT = `You are a versatile bilingual AI assistant optimized for mobile reading. 
+Analyze the user's input (text, questions, or images) and respond appropriately.
 
-CRITICAL RULES for chunking:
-- Divide the text into logical chunks of roughly 7 to 8 lines.
+If the user wants translation:
+- Identify the source language.
+- If it's English, translate to Japanese.
+- If it's Japanese, translate to English.
+- If it's another language, translate to Japanese.
+
+If the user asks a general question or gives instructions:
+- Answer them helpfully in the same language they used, or Japanese if appropriate.
+
+CRITICAL RULES for chunking output:
+- Divide long texts or explanations into logical chunks of roughly 7 to 8 lines.
 - The maximum length of a single chunk MUST NOT exceed 10 lines.
-- ALWAYS split at natural sentence boundaries (e.g., full stops). Do not cut mid-sentence.
+- ALWAYS split at natural sentence boundaries.
 - 漫画等の画像のルビは表示しなくてよい
 `;
 
@@ -258,14 +269,12 @@ CRITICAL RULES for chunking:
         const clearCacheBtn = document.getElementById('clearCacheBtn');
         const tabList = document.getElementById('tabList');
 
-        // テーマ・ドロワー関連要素
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsDrawerOverlay = document.getElementById('settingsDrawerOverlay');
         const settingsDrawer = document.getElementById('settingsDrawer');
         const closeSettingsDrawerBtn = document.getElementById('closeSettingsDrawerBtn');
         const themeSelect = document.getElementById('themeSelect');
 
-        // テーマ初期化と適用
         function applyTheme(themeValue) {
             const htmlEl = document.documentElement;
             if (themeValue === 'dark' || (themeValue === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -290,10 +299,9 @@ CRITICAL RULES for chunking:
             }
         });
 
-        // ドロワー開閉ロジック
         function openSettingsDrawer() {
             settingsDrawerOverlay.classList.remove('hidden');
-            void settingsDrawerOverlay.offsetWidth; // trigger reflow
+            void settingsDrawerOverlay.offsetWidth; 
             settingsDrawerOverlay.classList.remove('opacity-0');
             settingsDrawer.classList.remove('translate-x-full');
         }
@@ -413,7 +421,7 @@ CRITICAL RULES for chunking:
             } else {
                 translateBtn.disabled = false;
                 translateBtn.classList.remove('opacity-70');
-                translateBtn.querySelector('span').textContent = '対訳を生成する';
+                translateBtn.querySelector('span').textContent = '送信・翻訳する';
                 loadingSpinner.classList.add('hidden');
             }
         }
@@ -457,13 +465,13 @@ CRITICAL RULES for chunking:
             });
 
             if (isTranslationVisible) {
-                toggleTranslationText.textContent = '訳文を非表示';
+                toggleTranslationText.textContent = '回答(訳文)を非表示';
                 toggleEyeIcon.innerHTML = `
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 `;
             } else {
-                toggleTranslationText.textContent = '訳文を表示';
+                toggleTranslationText.textContent = '回答(訳文)を表示';
                 toggleEyeIcon.innerHTML = `
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
                 `;
@@ -479,7 +487,7 @@ CRITICAL RULES for chunking:
         newTabBtn.addEventListener('click', createNewSession);
         
         clearCacheBtn.addEventListener('click', () => {
-            if (confirm("すべてのタブと翻訳履歴を削除します。\n※APIキーの設定は保持されます。\nよろしいですか？")) {
+            if (confirm("すべてのタブと履歴を削除します。\n※APIキーの設定は保持されます。\nよろしいですか？")) {
                 localStorage.removeItem('bilingual_reader_sessions');
                 localStorage.removeItem('bilingual_reader_current_id');
                 sessions = [];
@@ -649,8 +657,8 @@ CRITICAL RULES for chunking:
             let text = "";
             results.forEach(block => {
                 if (block.speaker) text += `(${block.speaker})\n`;
-                text += `${block.sourceText || ''}\n\n`;
-                text += `${block.translatedText || ''}\n\n`;
+                if (block.sourceText) text += `${block.sourceText}\n\n`;
+                if (block.translatedText) text += `${block.translatedText}\n\n`;
             });
             return text.trim();
         }
@@ -658,17 +666,17 @@ CRITICAL RULES for chunking:
         copyCurrentTabBtn.addEventListener('click', () => {
             const session = sessions.find(s => s.id === currentSessionId);
             if (!session || !session.results || session.results.length === 0) {
-                showError("現在のタブにコピーする翻訳結果がありません。");
+                showError("現在のタブにコピーする結果がありません。");
                 return;
             }
             const output = formatSessionResults(session.results);
-            copyToClipboard(output, "タブ内の対訳をコピーしました");
+            copyToClipboard(output, "タブ内の結果をコピーしました");
         });
 
         copyAllTabsBtn.addEventListener('click', () => {
             const validSessions = sessions.filter(s => s.results && s.results.length > 0);
             if (validSessions.length === 0) {
-                showError("コピー可能な翻訳結果が存在しません。");
+                showError("コピー可能な結果が存在しません。");
                 return;
             }
 
@@ -679,7 +687,7 @@ CRITICAL RULES for chunking:
                 return `${header}\n\n${content}`;
             }).join('\n\n---\n\n');
 
-            copyToClipboard(combinedText, "全タブの対訳を一括コピーしました");
+            copyToClipboard(combinedText, "全タブの結果を一括コピーしました");
         });
 
         window.copyCardById = function(cardId) {
@@ -687,14 +695,15 @@ CRITICAL RULES for chunking:
             if (!block) return;
             let text = "";
             if (block.speaker) text += `(${block.speaker})\n`;
-            text += `${block.sourceText || ''}\n\n${block.translatedText || ''}`;
-            copyToClipboard(text, "カードの対訳をコピーしました");
+            if (block.sourceText) text += `${block.sourceText}\n\n`;
+            if (block.translatedText) text += `${block.translatedText}`;
+            copyToClipboard(text.trim(), "カードの内容をコピーしました");
         };
 
         async function processTranslation() {
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
-                showError("APIキーが設定されていません。「翻訳ルール設定 / APIキー設定」からAPIキーを入力してください。");
+                showError("APIキーが設定されていません。「プロンプト設定 / APIキー設定」からAPIキーを入力してください。");
                 return;
             }
 
@@ -723,7 +732,7 @@ CRITICAL RULES for chunking:
                 if (text) {
                     targetSession.title = text.substring(0, 15).replace(/\n/g, ' ') + '...';
                 } else {
-                    targetSession.title = "画像翻訳";
+                    targetSession.title = "画像解析";
                 }
 
                 if (currentSessionId === targetSession.id) {
@@ -734,7 +743,7 @@ CRITICAL RULES for chunking:
 
             } catch (err) {
                 console.error(err);
-                showError(err.message || "翻訳中にエラーが発生しました。通信状況やAPIキーをご確認ください。");
+                showError(err.message || "通信中にエラーが発生しました。通信状況やAPIキーをご確認ください。");
             } finally {
                 targetSession.isProcessing = false;
                 if (currentSessionId === targetSession.id) {
@@ -755,15 +764,17 @@ CRITICAL RULES for chunking:
                 });
             });
 
-            const jsonInstruction = `\n\nYOU MUST RESPOND ONLY WITH A VALID JSON ARRAY. No explanations, no markdown blocks.
+            // 翻訳以外の用途でも使えるようにJSON指示を調整
+            const jsonInstruction = `\n\nYOU MUST RESPOND ONLY WITH A VALID JSON ARRAY. No explanations, no markdown blocks outside the JSON.
 Format:
 [
   {
-    "speaker": "Speaker Name (or empty string)",
-    "sourceText": "Original text segment",
-    "translatedText": "Translated text segment"
+    "speaker": "Speaker Name (or empty string. Use if applicable)",
+    "sourceText": "Original text segment, user query, or topic description",
+    "translatedText": "Translated text, answer, or your main response"
   }
-]`;
+]
+If the user asks a general question, put the context/question in 'sourceText' and your answer in 'translatedText'.`;
 
             const payload = {
                 contents: [{ parts: parts }],
@@ -793,11 +804,28 @@ Format:
 
                     const result = await response.json();
                     let rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
                     if (rawText) {
                         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-                        return JSON.parse(rawText);
+                        try {
+                            const parsed = JSON.parse(rawText);
+                            // 配列じゃない場合(1つのオブジェクトのみ返ってきた場合)への耐性
+                            if (Array.isArray(parsed)) {
+                                return parsed;
+                            } else {
+                                return [parsed];
+                            }
+                        } catch (parseError) {
+                            console.warn("JSON Parse Error, falling back to raw text rendering", parseError);
+                            // どんなレスポンスでもエラーにせず、結果を強制的に表示するフォールバック処理
+                            return [{
+                                speaker: "",
+                                sourceText: "",
+                                translatedText: rawText
+                            }];
+                        }
                     } else {
-                        throw new Error("APIレスポンスの形式が正しくありません。");
+                        throw new Error("APIレスポンスにテキストが含まれていません。");
                     }
                 } catch (error) {
                     if (i === retries - 1) throw error;
@@ -833,17 +861,27 @@ Format:
                     </button>
                 `;
 
+                // sourceText が空の場合は上のブロックを表示しない
+                const sourceHtml = block.sourceText ? `
+                    <div class="text-[16px] text-gray-900 dark:text-gray-100 leading-relaxed font-sans pr-8">
+                        ${escapeHtml(block.sourceText).replace(/\n/g, '<br>')}
+                    </div>
+                ` : '';
+
+                // translatedText の表示。sourceTextが存在する場合は境界線を引く
+                const translatedHtml = `
+                    <div class="translated-content ${isTranslationVisible ? '' : 'hidden'} flex flex-col gap-3">
+                        ${block.sourceText ? '<div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>' : ''}
+                        <div class="text-[16px] text-[#007AFF] dark:text-[#60A5FA] leading-relaxed font-sans pr-8">
+                            ${escapeHtml(block.translatedText || '').replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `;
+
                 const textHtml = `
-                    <div class="p-4 flex flex-col gap-3 pt-4">
-                        <div class="text-[16px] text-gray-900 dark:text-gray-100 leading-relaxed font-sans pr-8">
-                            ${escapeHtml(block.sourceText || '').replace(/\n/g, '<br>')}
-                        </div>
-                        <div class="translated-content ${isTranslationVisible ? '' : 'hidden'} flex flex-col gap-3">
-                            <div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>
-                            <div class="text-[16px] text-[#007AFF] dark:text-[#60A5FA] leading-relaxed font-sans pr-8">
-                                ${escapeHtml(block.translatedText || '').replace(/\n/g, '<br>')}
-                            </div>
-                        </div>
+                    <div class="p-4 flex flex-col gap-3 ${speakerHtml ? 'pt-4' : 'pt-5'}">
+                        ${sourceHtml}
+                        ${translatedHtml}
                     </div>
                 `;
 
