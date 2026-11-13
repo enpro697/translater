@@ -384,9 +384,9 @@ CRITICAL RULES for chunking output:
         function updateActiveModelIndicator() {
             const selected = localStorage.getItem('bilingual_reader_selected_model') || 'auto';
             if (selected === 'auto') {
-                activeModelIndicator.textContent = '🤖 モデル: 自動選択';
+                activeModelIndicator.textContent = '🌌 モデル: 自動選択';
             } else {
-                activeModelIndicator.textContent = `🤖 ${selected.replace('models/', '')}`;
+                activeModelIndicator.textContent = `🌌 ${selected.replace('models/', '')}`;
             }
         }
 
