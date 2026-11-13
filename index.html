@@ -58,8 +58,13 @@
                 <span>新規</span>
             </button>
         </div>
+
+        <div class="px-3 pt-2 pb-0.5 text-[11px] text-gray-500 flex justify-between items-center select-none">
+            <span>履歴一覧</span>
+            <span>左スライド / 長押しで削除</span>
+        </div>
         
-        <div id="tabList" class="flex-1 overflow-y-auto p-2 flex flex-col gap-1"></div>
+        <div id="tabList" class="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5"></div>
 
         <div class="p-3 border-t border-gray-800 bg-gray-900/80 dark:bg-black/80 backdrop-blur-sm">
             <button id="clearCacheBtn" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[13px] font-medium py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors ios-btn">
@@ -406,18 +411,15 @@ CRITICAL RULES for chunking output:
                 const data = await response.json();
                 const models = data.models || [];
 
-                // generateContent に対応しているモデルのみ抽出（埋め込み用や画像生成専用などを除外）
                 const validModels = models.filter(m => 
                     m.supportedGenerationMethods && 
                     m.supportedGenerationMethods.includes('generateContent') &&
                     m.name.includes('gemini')
                 );
 
-                // 見やすいように名前順（新しい順）にソート
                 validModels.sort((a, b) => b.name.localeCompare(a.name));
                 availableModelsList = validModels;
 
-                // キャッシュ保存
                 localStorage.setItem('bilingual_reader_cached_models', JSON.stringify(validModels));
 
                 renderModelSelectOptions(validModels);
@@ -435,12 +437,10 @@ CRITICAL RULES for chunking output:
             }
         }
 
-        // プルダウンの選択肢を構築
         function renderModelSelectOptions(models) {
             const savedSelection = localStorage.getItem('bilingual_reader_selected_model') || 'auto';
             modelSelect.innerHTML = '';
 
-            // デフォルトの自動選択オプション
             const autoOpt = document.createElement('option');
             autoOpt.value = 'auto';
             autoOpt.textContent = '自動選択（標準Flash系を優先）';
@@ -448,14 +448,13 @@ CRITICAL RULES for chunking output:
 
             models.forEach(m => {
                 const opt = document.createElement('option');
-                opt.value = m.name; // "models/gemini-..."
+                opt.value = m.name;
                 const shortId = m.name.replace('models/', '');
                 const displayName = m.displayName ? `${m.displayName} (${shortId})` : shortId;
                 opt.textContent = displayName;
                 modelSelect.appendChild(opt);
             });
 
-            // 保存されていた選択状態を復元
             if ([...modelSelect.options].some(o => o.value === savedSelection)) {
                 modelSelect.value = savedSelection;
             } else {
@@ -468,7 +467,6 @@ CRITICAL RULES for chunking output:
             fetchAndPopulateModels(key, false);
         });
 
-        // 初期値の復元
         const initialApiKey = localStorage.getItem('gemini_api_key') || '';
         apiKeyInput.value = initialApiKey;
         ocrProviderSelect.value = localStorage.getItem('bilingual_reader_ocr_provider') || 'none';
@@ -476,7 +474,6 @@ CRITICAL RULES for chunking output:
         updateOcrSettingsUI();
         updateActiveModelIndicator();
 
-        // キャッシュされたモデル一覧があればプルダウンに即座に復元し、バックグラウンドで最新を取得
         const cachedModelsStr = localStorage.getItem('bilingual_reader_cached_models');
         if (cachedModelsStr) {
             try {
@@ -552,6 +549,7 @@ CRITICAL RULES for chunking output:
             if (currentSessionId) saveCurrentSessionInput();
             currentSessionId = id;
             const session = sessions.find(s => s.id === id);
+            if (!session) return;
             
             inputText.value = session.inputText;
             promptInput.value = session.prompt;
@@ -571,6 +569,28 @@ CRITICAL RULES for chunking output:
             renderTabList();
             closeSidebarMobile();
             saveStateToStorage();
+        }
+
+        // 個別タブの削除処理
+        function deleteSessionById(id) {
+            const idx = sessions.findIndex(s => s.id === id);
+            if (idx === -1) return;
+
+            sessions.splice(idx, 1);
+
+            if (sessions.length === 0) {
+                currentSessionId = null;
+                createNewSession();
+            } else if (currentSessionId === id) {
+                // 削除したのが現在開いているタブなら隣のタブへ移動
+                const nextSession = sessions[Math.min(idx, sessions.length - 1)];
+                currentSessionId = null;
+                switchSession(nextSession.id);
+            } else {
+                renderTabList();
+                saveStateToStorage();
+            }
+            showToast("履歴を削除しました");
         }
 
         function updateTranslateButtonState(isProcessing, statusLabel = '処理中...') {
@@ -598,18 +618,135 @@ CRITICAL RULES for chunking output:
             }
         }
 
+        // タブ一覧の描画（左スワイプ・長押し・個別削除ボタン対応）
         function renderTabList() {
             tabList.innerHTML = '';
             sessions.forEach(session => {
                 const isActive = session.id === currentSessionId;
-                const btn = document.createElement('button');
-                btn.className = `text-left w-full px-3 py-2 rounded-lg text-[14px] truncate transition-colors ios-btn flex items-center justify-between ${isActive ? 'bg-gray-800 dark:bg-gray-700 text-white font-semibold' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`;
+
+                // 外枠（背景に赤い削除ボタンを配置）
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative overflow-hidden rounded-lg bg-red-600 select-none flex-shrink-0';
+
+                // スワイプ時に背面から現れる削除ボタン
+                const bgDeleteBtn = document.createElement('button');
+                bgDeleteBtn.type = 'button';
+                bgDeleteBtn.className = 'absolute inset-y-0 right-0 w-16 bg-red-600 hover:bg-red-500 text-white text-[12px] font-bold flex items-center justify-center z-0';
+                bgDeleteBtn.textContent = '削除';
+                bgDeleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteSessionById(session.id);
+                };
+                wrapper.appendChild(bgDeleteBtn);
+
+                // 前面のスライド可能なタブ本体
+                const itemRow = document.createElement('div');
+                itemRow.className = `relative z-10 flex items-center justify-between w-full px-3 py-2.5 text-[14px] transition-transform duration-200 cursor-pointer group ${isActive ? 'bg-gray-800 dark:bg-gray-700 text-white font-semibold' : 'bg-gray-900 dark:bg-[#141416] text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`;
+
                 const titleSpan = document.createElement('span');
-                titleSpan.className = 'truncate';
+                titleSpan.className = 'truncate pr-2 pointer-events-none';
                 titleSpan.textContent = (session.isProcessing ? '⏳ ' : '') + session.title;
-                btn.appendChild(titleSpan);
-                btn.onclick = () => switchSession(session.id);
-                tabList.appendChild(btn);
+                itemRow.appendChild(titleSpan);
+
+                // PCやワンタップ削除用の小さなゴミ箱/×アイコン
+                const quickDelBtn = document.createElement('button');
+                quickDelBtn.type = 'button';
+                quickDelBtn.title = 'この履歴を削除';
+                quickDelBtn.className = `p-1 rounded hover:bg-red-500/20 hover:text-red-400 transition-opacity flex-shrink-0 ${isActive ? 'opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
+                quickDelBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                quickDelBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteSessionById(session.id);
+                };
+                itemRow.appendChild(quickDelBtn);
+
+                // --- タッチ操作（左スワイプ ＆ 長押し）の制御 ---
+                let startX = 0;
+                let startY = 0;
+                let currentX = 0;
+                let isSwiping = false;
+                let isOpened = false;
+                let pressTimer = null;
+                let longPressTriggered = false;
+
+                itemRow.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    currentX = isOpened ? -64 : 0;
+                    isSwiping = false;
+                    longPressTriggered = false;
+                    itemRow.style.transition = 'none';
+
+                    // 長押し判定タイマー（550ms）
+                    pressTimer = setTimeout(() => {
+                        longPressTriggered = true;
+                        if (navigator.vibrate) navigator.vibrate(30);
+                        if (confirm(`「${session.title}」を削除しますか？`)) {
+                            deleteSessionById(session.id);
+                        }
+                    }, 550);
+                }, { passive: true });
+
+                itemRow.addEventListener('touchmove', (e) => {
+                    if (e.touches.length !== 1) return;
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+
+                    // 指が一定以上動いたら長押しをキャンセル
+                    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                        clearTimeout(pressTimer);
+                    }
+
+                    // 横方向の動きが縦方向より大きい場合はスワイプとみなす
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+                        isSwiping = true;
+                        let translate = (isOpened ? -64 : 0) + dx;
+                        // 右方向には行き過ぎないよう制限、左は最大140pxまで
+                        if (translate > 0) translate = 0;
+                        if (translate < -140) translate = -140;
+                        currentX = translate;
+                        itemRow.style.transform = `translateX(${currentX}px)`;
+                    }
+                }, { passive: true });
+
+                itemRow.addEventListener('touchend', () => {
+                    clearTimeout(pressTimer);
+                    itemRow.style.transition = 'transform 0.2s ease-out';
+
+                    if (isSwiping) {
+                        if (currentX < -115) {
+                            // 大きく左へ引き切った場合はそのまま削除
+                            deleteSessionById(session.id);
+                        } else if (currentX < -32) {
+                            // 削除ボタンが半分以上見えたら開いた状態で固定
+                            itemRow.style.transform = 'translateX(-64px)';
+                            isOpened = true;
+                        } else {
+                            // 元に戻す
+                            itemRow.style.transform = 'translateX(0px)';
+                            isOpened = false;
+                        }
+                    }
+                });
+
+                // クリック（タップ）時の処理
+                itemRow.addEventListener('click', (e) => {
+                    if (longPressTriggered || isSwiping) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (isOpened) {
+                        // 削除ボタンが開いている状態なら閉じるだけ
+                        itemRow.style.transform = 'translateX(0px)';
+                        isOpened = false;
+                        return;
+                    }
+                    switchSession(session.id);
+                });
+
+                wrapper.appendChild(itemRow);
+                tabList.appendChild(wrapper);
             });
         }
 
@@ -686,7 +823,6 @@ CRITICAL RULES for chunking output:
                 promptArea.classList.remove('hidden');
                 promptArea.classList.add('flex');
 
-                // パネルを開いた時点で一覧が空かつAPIキーがあれば自動取得
                 if (availableModelsList.length === 0 && savedKey) {
                     await fetchAndPopulateModels(savedKey, true);
                 }
@@ -714,7 +850,6 @@ CRITICAL RULES for chunking output:
                 }
             }
 
-            // 選択されたモデルを保存
             localStorage.setItem('bilingual_reader_selected_model', modelSelect.value);
             updateActiveModelIndicator();
 
@@ -1046,7 +1181,6 @@ CRITICAL RULES for chunking output:
             }
         }
 
-        // 選択されたモデル（または自動選択）を返す関数
         async function resolveTargetModel(apiKey) {
             const selected = localStorage.getItem('bilingual_reader_selected_model') || 'auto';
             if (selected !== 'auto') {
