@@ -1149,7 +1149,7 @@ CRITICAL RULES for chunking output:
                 }
 
                 if (currentSessionId === targetSession.id) {
-                    updateTranslateButtonState(true, 'Geminiで翻訳中...');
+                    updateTranslateButtonState(true, '翻訳中...');
                 }
 
                 const responseObj = await callGeminiAPI(apiKey, textToSend, filesToSend, targetSession.prompt);
