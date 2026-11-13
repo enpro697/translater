@@ -108,10 +108,13 @@
                         <div id="previewContainer" class="flex flex-wrap gap-2 empty:hidden pt-1"></div>
                     </div>
 
-                    <div class="flex justify-between items-center px-1 mt-1">
-                        <span id="ocrStatusIndicator" class="text-[12px] text-gray-500 dark:text-gray-400"></span>
-                        <button id="togglePromptBtn" class="text-[13px] text-gray-500 dark:text-gray-400 underline ios-btn flex items-center gap-1 ml-auto">
-                            <span>⚙️ APIキー / OCR設定 / プロンプト</span>
+                    <div class="flex justify-between items-center px-1 mt-1 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span id="activeModelIndicator" class="text-[12px] text-gray-500 dark:text-gray-400 truncate"></span>
+                            <span id="ocrStatusIndicator" class="text-[12px] text-blue-600 dark:text-blue-400 truncate"></span>
+                        </div>
+                        <button id="togglePromptBtn" class="text-[13px] text-gray-500 dark:text-gray-400 underline ios-btn flex items-center gap-1 ml-auto flex-shrink-0">
+                            <span>⚙️ モデル / APIキー / OCR / プロンプト</span>
                         </button>
                     </div>
                     
@@ -119,6 +122,25 @@
                         <div class="flex flex-col gap-1">
                             <label for="apiKeyInput" class="text-[13px] text-gray-700 dark:text-gray-300 font-semibold">Gemini APIキー</label>
                             <input type="password" id="apiKeyInput" class="w-full p-2.5 text-[14px] bg-gray-50 dark:bg-[#2C2C2E] rounded border border-gray-200 dark:border-gray-700 outline-none dark:text-white" placeholder="AIzaSy...">
+                        </div>
+
+                        <!-- Gemini モデル選択プルダウン -->
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between items-center">
+                                <label for="modelSelect" class="text-[13px] text-gray-700 dark:text-gray-300 font-semibold">使用モデル (Gemini バージョン)</label>
+                                <button type="button" id="refreshModelsBtn" class="text-[12px] text-[#007AFF] dark:text-[#60A5FA] hover:underline flex items-center gap-1 ios-btn">
+                                    <span>🔄 一覧を取得/更新</span>
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <select id="modelSelect" class="w-full p-2.5 pr-8 text-[14px] bg-gray-50 dark:bg-[#2C2C2E] rounded border border-gray-200 dark:border-gray-700 outline-none dark:text-white appearance-none cursor-pointer">
+                                    <option value="auto">自動選択（標準Flash系を優先）</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-500">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                </div>
+                            </div>
+                            <span id="modelHelpText" class="text-[11px] text-gray-400 leading-snug">※用途や回数制限に応じて切り替えられます（flash-liteは制限が緩く高速、proは高精度）。</span>
                         </div>
 
                         <!-- 外部OCR設定セクション -->
@@ -239,6 +261,7 @@ CRITICAL RULES for chunking output:
         let sessions = [];
         let currentSessionId = null;
         let isTranslationVisible = true;
+        let availableModelsList = [];
 
         const inputText = document.getElementById('inputText');
         const fileInput = document.getElementById('fileInput');
@@ -250,6 +273,7 @@ CRITICAL RULES for chunking output:
         const outputSection = document.getElementById('outputSection');
         const resultsContainer = document.getElementById('resultsContainer');
         const usedModelBadge = document.getElementById('usedModelBadge');
+        const activeModelIndicator = document.getElementById('activeModelIndicator');
         const ocrStatusIndicator = document.getElementById('ocrStatusIndicator');
         
         const toggleTranslationVisibilityBtn = document.getElementById('toggleTranslationVisibilityBtn');
@@ -259,6 +283,8 @@ CRITICAL RULES for chunking output:
         const promptArea = document.getElementById('promptArea');
         const togglePromptBtn = document.getElementById('togglePromptBtn');
         const apiKeyInput = document.getElementById('apiKeyInput');
+        const modelSelect = document.getElementById('modelSelect');
+        const refreshModelsBtn = document.getElementById('refreshModelsBtn');
         const ocrProviderSelect = document.getElementById('ocrProviderSelect');
         const ocrKeyWrapper = document.getElementById('ocrKeyWrapper');
         const ocrApiKeyLabel = document.getElementById('ocrApiKeyLabel');
@@ -337,24 +363,130 @@ CRITICAL RULES for chunking output:
                 ocrApiKeyLabel.textContent = 'OCR.space APIキー';
                 ocrApiKeyInput.placeholder = 'K8... (無料登録で即時発行)';
                 ocrHelpText.textContent = '※ocr.space/ocrapi で無料キーを取得できます。添付順に文字抽出してからGeminiへテキストのみ送信します。';
-                ocrStatusIndicator.textContent = '🔍 外部OCR有効: OCR.space';
+                ocrStatusIndicator.textContent = '🔍 OCR.space';
             } else if (provider === 'vision') {
                 ocrKeyWrapper.classList.remove('hidden');
                 ocrKeyWrapper.classList.add('flex');
                 ocrApiKeyLabel.textContent = 'Google Cloud Vision APIキー（空欄なら上のGeminiキーを使用）';
                 ocrApiKeyInput.placeholder = 'AIzaSy... (空欄可)';
-                ocrHelpText.textContent = '※Google CloudでVision APIを有効化したプロジェクトのAPIキーを使用します。書籍の段組み・段落を非常に高精度に認識します。';
-                ocrStatusIndicator.textContent = '🔍 外部OCR有効: Google Vision';
+                ocrHelpText.textContent = '※Google CloudでVision APIを有効化したプロジェクトのAPIキーを使用します。';
+                ocrStatusIndicator.textContent = '🔍 Google Vision';
+            }
+        }
+        ocrProviderSelect.addEventListener('change', updateOcrSettingsUI);
+
+        // 選択中モデルの表示インジケーター更新
+        function updateActiveModelIndicator() {
+            const selected = localStorage.getItem('bilingual_reader_selected_model') || 'auto';
+            if (selected === 'auto') {
+                activeModelIndicator.textContent = '🤖 モデル: 自動選択';
+            } else {
+                activeModelIndicator.textContent = `🤖 ${selected.replace('models/', '')}`;
             }
         }
 
-        ocrProviderSelect.addEventListener('change', updateOcrSettingsUI);
+        // 利用可能なGeminiモデル一覧を取得してプルダウンに反映
+        async function fetchAndPopulateModels(apiKey, silent = false) {
+            if (!apiKey) {
+                if (!silent) showError("先にGemini APIキーを入力してください。");
+                return [];
+            }
+
+            if (!silent) {
+                refreshModelsBtn.disabled = true;
+                refreshModelsBtn.querySelector('span').textContent = '取得中...';
+            }
+
+            try {
+                const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+                const response = await fetch(listUrl);
+                if (!response.ok) {
+                    throw new Error(`モデル一覧の取得に失敗しました (${response.status}): APIキーを確認してください。`);
+                }
+                const data = await response.json();
+                const models = data.models || [];
+
+                // generateContent に対応しているモデルのみ抽出（埋め込み用や画像生成専用などを除外）
+                const validModels = models.filter(m => 
+                    m.supportedGenerationMethods && 
+                    m.supportedGenerationMethods.includes('generateContent') &&
+                    m.name.includes('gemini')
+                );
+
+                // 見やすいように名前順（新しい順）にソート
+                validModels.sort((a, b) => b.name.localeCompare(a.name));
+                availableModelsList = validModels;
+
+                // キャッシュ保存
+                localStorage.setItem('bilingual_reader_cached_models', JSON.stringify(validModels));
+
+                renderModelSelectOptions(validModels);
+                if (!silent) showToast(`${validModels.length}個のモデルを取得しました`);
+                return validModels;
+
+            } catch (err) {
+                if (!silent) showError(err.message);
+                return [];
+            } finally {
+                if (!silent) {
+                    refreshModelsBtn.disabled = false;
+                    refreshModelsBtn.querySelector('span').textContent = '🔄 一覧を取得/更新';
+                }
+            }
+        }
+
+        // プルダウンの選択肢を構築
+        function renderModelSelectOptions(models) {
+            const savedSelection = localStorage.getItem('bilingual_reader_selected_model') || 'auto';
+            modelSelect.innerHTML = '';
+
+            // デフォルトの自動選択オプション
+            const autoOpt = document.createElement('option');
+            autoOpt.value = 'auto';
+            autoOpt.textContent = '自動選択（標準Flash系を優先）';
+            modelSelect.appendChild(autoOpt);
+
+            models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.name; // "models/gemini-..."
+                const shortId = m.name.replace('models/', '');
+                const displayName = m.displayName ? `${m.displayName} (${shortId})` : shortId;
+                opt.textContent = displayName;
+                modelSelect.appendChild(opt);
+            });
+
+            // 保存されていた選択状態を復元
+            if ([...modelSelect.options].some(o => o.value === savedSelection)) {
+                modelSelect.value = savedSelection;
+            } else {
+                modelSelect.value = 'auto';
+            }
+        }
+
+        refreshModelsBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim() || localStorage.getItem('gemini_api_key');
+            fetchAndPopulateModels(key, false);
+        });
 
         // 初期値の復元
-        apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+        const initialApiKey = localStorage.getItem('gemini_api_key') || '';
+        apiKeyInput.value = initialApiKey;
         ocrProviderSelect.value = localStorage.getItem('bilingual_reader_ocr_provider') || 'none';
         ocrApiKeyInput.value = localStorage.getItem('bilingual_reader_ocr_key') || '';
         updateOcrSettingsUI();
+        updateActiveModelIndicator();
+
+        // キャッシュされたモデル一覧があればプルダウンに即座に復元し、バックグラウンドで最新を取得
+        const cachedModelsStr = localStorage.getItem('bilingual_reader_cached_models');
+        if (cachedModelsStr) {
+            try {
+                availableModelsList = JSON.parse(cachedModelsStr);
+                renderModelSelectOptions(availableModelsList);
+            } catch (e) {}
+        }
+        if (initialApiKey) {
+            fetchAndPopulateModels(initialApiKey, true);
+        }
 
         if (!loadStateFromStorage()) {
             createNewSession();
@@ -441,7 +573,6 @@ CRITICAL RULES for chunking output:
             saveStateToStorage();
         }
 
-        // スピナー・ボタン状態の制御を確実に実行
         function updateTranslateButtonState(isProcessing, statusLabel = '処理中...') {
             if (isProcessing) {
                 translateBtn.disabled = true;
@@ -507,7 +638,7 @@ CRITICAL RULES for chunking output:
         newTabBtn.addEventListener('click', createNewSession);
         
         clearCacheBtn.addEventListener('click', () => {
-            if (confirm("すべてのタブと履歴を削除します。\n※APIキーの設定は保持されます。\nよろしいですか？")) {
+            if (confirm("すべてのタブと履歴を削除します。\n※APIキーやモデルの設定は保持されます。\nよろしいですか？")) {
                 localStorage.removeItem('bilingual_reader_sessions');
                 localStorage.removeItem('bilingual_reader_current_id');
                 sessions = [];
@@ -542,16 +673,23 @@ CRITICAL RULES for chunking output:
         translateBtn.addEventListener('click', processTranslation);
         closeErrorBtn.addEventListener('click', closeError);
 
-        togglePromptBtn.addEventListener('click', () => {
+        togglePromptBtn.addEventListener('click', async () => {
             if (promptArea.classList.contains('hidden')) {
                 const session = sessions.find(s => s.id === currentSessionId);
                 promptInput.value = session.prompt;
-                apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+                const savedKey = localStorage.getItem('gemini_api_key') || '';
+                apiKeyInput.value = savedKey;
                 ocrProviderSelect.value = localStorage.getItem('bilingual_reader_ocr_provider') || 'none';
                 ocrApiKeyInput.value = localStorage.getItem('bilingual_reader_ocr_key') || '';
                 updateOcrSettingsUI();
+
                 promptArea.classList.remove('hidden');
                 promptArea.classList.add('flex');
+
+                // パネルを開いた時点で一覧が空かつAPIキーがあれば自動取得
+                if (availableModelsList.length === 0 && savedKey) {
+                    await fetchAndPopulateModels(savedKey, true);
+                }
             } else {
                 promptArea.classList.add('hidden');
                 promptArea.classList.remove('flex');
@@ -560,17 +698,25 @@ CRITICAL RULES for chunking output:
 
         resetPromptBtn.addEventListener('click', () => promptInput.value = DEFAULT_PROMPT);
 
-        applyPromptBtn.addEventListener('click', () => {
+        applyPromptBtn.addEventListener('click', async () => {
             const session = sessions.find(s => s.id === currentSessionId);
             const chosenPrompt = promptInput.value.trim() || DEFAULT_PROMPT;
             session.prompt = chosenPrompt;
             localStorage.setItem('bilingual_reader_latest_prompt', chosenPrompt);
 
+            const prevKey = localStorage.getItem('gemini_api_key') || '';
             const keyVal = apiKeyInput.value.trim();
             if (keyVal) {
                 localStorage.setItem('gemini_api_key', keyVal);
-                sessionStorage.removeItem('gemini_valid_model');
+                if (keyVal !== prevKey) {
+                    sessionStorage.removeItem('gemini_valid_model');
+                    await fetchAndPopulateModels(keyVal, true);
+                }
             }
+
+            // 選択されたモデルを保存
+            localStorage.setItem('bilingual_reader_selected_model', modelSelect.value);
+            updateActiveModelIndicator();
 
             localStorage.setItem('bilingual_reader_ocr_provider', ocrProviderSelect.value);
             localStorage.setItem('bilingual_reader_ocr_key', ocrApiKeyInput.value.trim());
@@ -820,7 +966,7 @@ CRITICAL RULES for chunking output:
         async function processTranslation() {
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
-                showError("APIキーが設定されていません。「APIキー / OCR設定 / プロンプト」からGemini APIキーを入力してください。");
+                showError("APIキーが設定されていません。「モデル / APIキー / OCR / プロンプト」からGemini APIキーを入力してください。");
                 return;
             }
 
@@ -833,7 +979,6 @@ CRITICAL RULES for chunking output:
                 return;
             }
 
-            // 押下直後に即座にスピナーを表示してボタンを無効化
             targetSession.isProcessing = true;
             updateTranslateButtonState(true, '準備中...');
             renderTabList();
@@ -901,21 +1046,19 @@ CRITICAL RULES for chunking output:
             }
         }
 
-        async function getAvailableModel(apiKey) {
+        // 選択されたモデル（または自動選択）を返す関数
+        async function resolveTargetModel(apiKey) {
+            const selected = localStorage.getItem('bilingual_reader_selected_model') || 'auto';
+            if (selected !== 'auto') {
+                return selected.startsWith('models/') ? selected : `models/${selected}`;
+            }
+
             const cachedModel = sessionStorage.getItem('gemini_valid_model');
             if (cachedModel) return cachedModel;
 
-            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-            const response = await fetch(listUrl);
-            if (!response.ok) {
-                throw new Error(`モデル一覧の取得に失敗しました (${response.status}): APIキーを確認してください。`);
-            }
-            const data = await response.json();
-            const models = data.models || [];
-
-            const validModels = models.filter(m => 
-                m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
-            );
+            const validModels = availableModelsList.length > 0 
+                ? availableModelsList 
+                : await fetchAndPopulateModels(apiKey, true);
 
             const preferred = 
                 validModels.find(m => m.name.includes('flash-lite') && !m.name.includes('preview')) ||
@@ -933,7 +1076,7 @@ CRITICAL RULES for chunking output:
         }
 
         async function callGeminiAPI(apiKey, text, attachedFiles, promptStr, retries = 3, delay = 1000) {
-            const modelName = await getAvailableModel(apiKey);
+            const modelName = await resolveTargetModel(apiKey);
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
 
             const parts = [];
@@ -981,19 +1124,19 @@ If the user asks a general question, put the context/question in 'sourceText' an
                     });
 
                     if (!response.ok) {
-                        if (response.status === 400) throw new Error("APIエラー (400): リクエスト形式が無効です。");
+                        if (response.status === 400) throw new Error("APIエラー (400): リクエスト形式が無効か、選択したモデルがこの入力形式に対応していません。");
                         if (response.status === 403) throw new Error("APIエラー (403): APIキーが無効か権限がありません。");
                         if (response.status === 404) {
                             sessionStorage.removeItem('gemini_valid_model');
-                            throw new Error(`APIエラー (404): モデル(${modelName})が見つかりません。もう一度お試しください。`);
+                            throw new Error(`APIエラー (404): モデル(${modelName.replace('models/', '')})が見つかりません。別のモデルを選択してください。`);
                         }
                         if (response.status === 429) {
-                            const rateError = new Error("API制限 (429): リクエスト上限に達しました。1〜2分ほど待ってから再度お試しください。");
+                            const rateError = new Error(`API制限 (429): ${modelName.replace('models/', '')} のリクエスト上限に達しました。別のモデルに切り替えるか、1〜2分待ってください。`);
                             rateError.noRetry = true;
                             throw rateError;
                         }
                         if (response.status === 503) {
-                            throw new Error("APIエラー (503): Googleのサーバーが一時的に混雑しています。数秒待ってから再度お試しください。");
+                            throw new Error("APIエラー (503): Googleのサーバーが一時的に混雑しています。数秒待つか別のモデルをお試しください。");
                         }
                         throw new Error(`APIエラー: ${response.status}`);
                     }
